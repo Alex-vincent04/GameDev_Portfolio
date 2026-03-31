@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPS Demo — Alex Vincent</title>
+<meta name="description" content="Detailed documentation for DEMO_FPS_GAME: a Unity first-person shooter with sprint/dash movement, raycasting weapons, three enemy AI types, and key-gated multi-scene progression by Alex Vincent.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script>!function(){var t=localStorage.getItem('theme'),d=matchMedia('(prefers-color-scheme:dark)').matches;(t==='dark'||(t===null&&d))&&document.documentElement.setAttribute('data-theme','dark');}();</script>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --ink: #1a1814;
+    --mid: #8a8580;
+    --line: #dedad4;
+    --accent: #c84b2f;
+  }
+
+  [data-theme="dark"] { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; } }
+  .theme-toggle { background: none; border: 1px solid var(--line); color: var(--mid); font-family: 'DM Mono', monospace; font-size: 0.9rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s, border-color 0.2s; flex-shrink: 0; padding: 0; }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--mid); }
+  .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── NAV ── */
+  nav {
+    padding: 2.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+  }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 1.1rem; text-decoration: none; color: var(--ink); }
+  .back-link { font-size: 0.72rem; color: var(--mid); text-decoration: none; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
+  .back-link:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .project-hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--line);
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.1s forwards;
+  }
+  .project-label { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); margin-bottom: 1.5rem; }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(3rem, 8vw, 5.5rem); line-height: 1.0; letter-spacing: -0.02em; margin-bottom: 1.8rem; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .project-summary { max-width: 560px; color: var(--mid); font-size: 0.95rem; line-height: 1.9; margin-bottom: 2rem; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+  .tag { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); border: 1px solid var(--line); padding: 0.2rem 0.7rem; }
+  .hero-meta { display: flex; gap: 3rem; flex-wrap: wrap; }
+  .meta-label { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.2rem; }
+  .meta-value { font-size: 0.85rem; color: var(--ink); }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── TABS ── */
+  .tab-section { padding: 4rem 0; opacity: 0; animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.25s forwards; }
+  .tab-bar { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 3rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--mid); background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.4rem; cursor: pointer; white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s; margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── DOC CONTENT ── */
+  .doc-h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.01em; margin-bottom: 2rem; line-height: 1.15; }
+  .doc-h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; letter-spacing: -0.01em; margin: 2.5rem 0 0.8rem; }
+  .doc-h3:first-child { margin-top: 0; }
+  .doc-p { font-size: 0.88rem; color: var(--mid); line-height: 1.9; margin-bottom: 1rem; }
+  .doc-list { list-style: none; margin-bottom: 1.4rem; }
+  .doc-list li { font-size: 0.85rem; color: var(--mid); line-height: 2; padding-left: 1.4rem; position: relative; }
+  .doc-list li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+  .doc-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 4rem; margin-bottom: 2rem; }
+  .doc-divider { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  .doc-table-wrap { overflow-x: auto; margin-bottom: 1.8rem; }
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .doc-table th { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); border-bottom: 1px solid var(--line); padding: 0.6rem 1rem; text-align: left; white-space: nowrap; }
+  .doc-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); color: var(--ink); line-height: 1.6; vertical-align: top; }
+  .doc-table tr:last-child td { border-bottom: none; }
+  .doc-table tr:hover td { background: rgba(200,75,47,0.03); }
+  code { font-family: 'DM Mono', monospace; font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 0.12rem 0.4rem; border-radius: 2px; color: var(--ink); }
+
+  .doc-code { font-family: 'DM Mono', monospace; font-size: 0.78rem; background: rgba(0,0,0,0.04); border-left: 2px solid var(--accent); padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; overflow-x: auto; line-height: 1.75; color: var(--ink); white-space: pre; }
+  .doc-badge { display: inline-block; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid rgba(200,75,47,0.4); color: var(--accent); padding: 0.1rem 0.55rem; margin-left: 0.5rem; vertical-align: middle; position: relative; top: -1px; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 2rem; }
+  .stat-card { border: 1px solid var(--line); padding: 1rem; }
+  .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--accent); line-height: 1; margin-bottom: 0.3rem; }
+  .stat-lbl { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); }
+
+  /* Enemy cards */
+  .enemy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .enemy-card { border: 1px solid var(--line); padding: 1.2rem; }
+  .enemy-card .e-name { font-family: 'DM Serif Display', serif; font-size: 1rem; margin-bottom: 0.6rem; }
+  .enemy-card .e-tag { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(200,75,47,0.3); padding: 0.1rem 0.45rem; display: inline-block; margin-bottom: 0.8rem; }
+  .enemy-card ul { list-style: none; }
+  .enemy-card ul li { font-size: 0.78rem; color: var(--mid); line-height: 1.9; padding-left: 1rem; position: relative; }
+  .enemy-card ul li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+
+  /* Flow steps */
+  .flow-step { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; align-items: start; padding: 1.2rem 0; border-bottom: 1px solid var(--line); }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-num { font-size: 0.65rem; color: var(--accent); letter-spacing: 0.1em; padding-top: 0.15rem; }
+  .flow-title { font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .flow-desc { font-size: 0.8rem; color: var(--mid); line-height: 1.7; }
+
+  /* Scene cards */
+  .scene-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+  .scene-card { border: 1px solid var(--line); padding: 1.2rem; }
+  .scene-card .s-num { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.4rem; }
+  .scene-card .s-name { font-family: 'DM Serif Display', serif; font-size: 1rem; margin-bottom: 0.6rem; }
+  .scene-card .s-desc { font-size: 0.78rem; color: var(--mid); line-height: 1.7; }
+
+  /* GitHub CTA */
+  .github-cta { margin-top: 5rem; padding: 2.5rem; border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+  .github-cta-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.4rem; }
+  .github-cta-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; line-height: 1.2; }
+  .github-link { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; color: var(--bg); background: var(--ink); padding: 0.8rem 1.8rem; white-space: nowrap; transition: background 0.2s; }
+  .github-link:hover { background: var(--accent); }
+
+  /* Footer */
+  footer { padding: 2.5rem 0; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; margin-top: 5rem; }
+  .footer-name { font-family: 'DM Serif Display', serif; font-size: 0.95rem; }
+  .footer-copy { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.08em; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .doc-grid2 { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .enemy-grid { grid-template-columns: 1fr; }
+    .scene-grid { grid-template-columns: 1fr; }
+    .github-cta { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="logo">Alex Vincent</a>
+    <div class="nav-right">
+      <a href="index.html" class="back-link">← Back to Portfolio</a>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">◑</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="project-hero">
+    <div class="project-label">004 · 3D Game · Unity FPS</div>
+    <h1>FPS <em>Demo</em></h1>
+    <p class="project-summary">A Unity first-person shooter demo featuring sprint, dash, and double-jump movement, raycasting weapon mechanics, three distinct enemy AI types (melee, ranged, and tank with shield), turret defences, destructible objects, and key-gated multi-scene progression across four levels.</p>
+    <div class="hero-tags">
+      <span class="tag">Unity 3D</span>
+      <span class="tag">C#</span>
+      <span class="tag">FPS</span>
+      <span class="tag">AI</span>
+      <span class="tag">Raycasting</span>
+      <span class="tag">Coroutines</span>
+      <span class="tag">Input System</span>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-label">Engine</div>
+        <div class="meta-value">Unity (C#)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Scenes</div>
+        <div class="meta-value">4 levels</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Enemy Types</div>
+        <div class="meta-value">3</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Player HP</div>
+        <div class="meta-value">10</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Ammo / Mag</div>
+        <div class="meta-value">6 rounds</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-section">
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" aria-selected="true"  id="tbtn-player" onclick="switchTab('player')">Player</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-enemy"  onclick="switchTab('enemy')">Enemies</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-weapon" onclick="switchTab('weapon')">Weapons</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-world"  onclick="switchTab('world')">World &amp; Flow</button>
+    </div>
+
+    <!-- ════ TAB: PLAYER ════ -->
+    <div class="tab-pane active" id="pane-player" role="tabpanel">
+      <h2 class="doc-h2">Player System</h2>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">10</div><div class="stat-lbl">Max HP</div></div>
+        <div class="stat-card"><div class="stat-val">5</div><div class="stat-lbl">Walk Speed</div></div>
+        <div class="stat-card"><div class="stat-val">15</div><div class="stat-lbl">Sprint Speed</div></div>
+        <div class="stat-card"><div class="stat-val">20</div><div class="stat-lbl">Dash Speed</div></div>
+        <div class="stat-card"><div class="stat-val">0.5 s</div><div class="stat-lbl">Dash Cooldown</div></div>
+        <div class="stat-card"><div class="stat-val">5</div><div class="stat-lbl">Jump Force</div></div>
+      </div>
+
+      <div class="doc-h3">Movement <span class="doc-badge">MovementPlayer.cs</span></div>
+      <p class="doc-p">The player uses a <strong>CharacterController</strong> for smooth collision-based movement. A sphere cast handles ground detection so jumping feels snappy and reliable.</p>
+      <div class="doc-grid2">
+        <div>
+          <ul class="doc-list">
+            <li><strong>Walk:</strong> WASD at 5 units/s (animator-driven)</li>
+            <li><strong>Sprint:</strong> Hold Shift — total 15 units/s</li>
+            <li><strong>Jump:</strong> Space — force 5 units, gravity −20</li>
+            <li><strong>Dash:</strong> Left Alt — 20 units/s for 0.2 s, 0.5 s cooldown</li>
+          </ul>
+        </div>
+        <div>
+          <div class="doc-code" style="margin-bottom:0">moveSpeed    = 5f
+sprintBoost  = 10f
+jumpForce    = 5f
+gravity      = -20f
+dashSpeed    = 20f
+dashDuration = 0.2f
+dashCooldown = 0.5f</div>
+        </div>
+      </div>
+
+      <div class="doc-h3">Controls Reference</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Input</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><code>W A S D</code></td><td>Move forward / left / back / right</td></tr>
+            <tr><td><code>Space</code></td><td>Jump</td></tr>
+            <tr><td><code>Left Shift</code></td><td>Sprint</td></tr>
+            <tr><td><code>Left Alt</code></td><td>Dash (directional, with cooldown)</td></tr>
+            <tr><td><code>Mouse</code></td><td>Camera look / aim</td></tr>
+            <tr><td><code>Left Click</code></td><td>Shoot (Fire1)</td></tr>
+            <tr><td><code>Right Click</code></td><td>Reload (Fire2) — 2-second reload</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Camera &amp; Recoil <span class="doc-badge">CameraFunction.cs</span></div>
+      <p class="doc-p">Mouse look is clamped to <strong>±90°</strong> on the vertical axis. Each shot applies an upward recoil kick that smoothly interpolates back to the resting position.</p>
+      <div class="doc-grid2">
+        <div>
+          <ul class="doc-list">
+            <li>Sensitivity: <strong>100</strong> units (configurable)</li>
+            <li>Recoil applied per shot as a vertical offset</li>
+            <li>Smooth lerp recovery at configurable return speed</li>
+          </ul>
+        </div>
+        <div>
+          <div class="doc-code" style="margin-bottom:0">recoilAmount      = 2f
+recoilSpeed       = 10f
+returnSpeed       = 5f
+mouseSensitivity  = 100f</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Health &amp; Damage</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Damage Source</th><th>HP Lost</th><th>Extra Effect</th></tr></thead>
+          <tbody>
+            <tr><td>Enemy bullet (<code>EnemyBullet</code> tag)</td><td>1</td><td>—</td></tr>
+            <tr><td>Turret / cannon bullet</td><td>1</td><td>Knockback (30 force)</td></tr>
+            <tr><td>Enemy melee</td><td>2</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Inventory &amp; Progression</div>
+      <ul class="doc-list">
+        <li><strong>Score</strong> — increases by 1 per enemy defeated, tracked by GameManager</li>
+        <li><strong>Key</strong> — spawns after collecting 2 enemy drops; required to open gate to next scene</li>
+        <li><strong>Weapon pickups</strong> — dropped by enemies; auto-equip on collision</li>
+      </ul>
+    </div>
+
+    <!-- ════ TAB: ENEMIES ════ -->
+    <div class="tab-pane" id="pane-enemy" role="tabpanel">
+      <h2 class="doc-h2">Enemy System</h2>
+
+      <div class="enemy-grid">
+        <div class="enemy-card">
+          <div class="e-tag">Melee / Ranged</div>
+          <div class="e-name">Basic Enemy</div>
+          <ul>
+            <li>3 HP</li>
+            <li>Detects at 21 units</li>
+            <li>Melee: 2 dmg @ 2 units</li>
+            <li>Ranged: 1 dmg</li>
+            <li>2 s attack cooldown</li>
+            <li>Drops loot on death</li>
+          </ul>
+        </div>
+        <div class="enemy-card">
+          <div class="e-tag">Advanced AI</div>
+          <div class="e-name">Movement Enemy</div>
+          <ul>
+            <li>3 HP</li>
+            <li>Proper gravity + ground check</li>
+            <li>Melee stop: 2 units</li>
+            <li>Ranged stop: 5 units</li>
+            <li>Scales to player weapon dmg</li>
+            <li>Animation-ready</li>
+          </ul>
+        </div>
+        <div class="enemy-card">
+          <div class="e-tag">Ranged + Shield</div>
+          <div class="e-name">Shooter Enemy</div>
+          <ul>
+            <li>3 HP + 10-hit shield</li>
+            <li>Shoots at 15 units</li>
+            <li>Switches to melee closeup</li>
+            <li>Shield absorbs 10 hits</li>
+            <li>Tank variant uses shield</li>
+            <li>Tracks player position</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="doc-h3">Shared Enemy Behaviour</div>
+      <p class="doc-p">All enemies use a <strong>CharacterController</strong> and share a detection → chase → attack state model. They rotate smoothly to face the player and respect their own stop-distance so melee and ranged types feel distinct.</p>
+
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Parameter</th><th>Basic Enemy</th><th>Movement Enemy</th><th>Shooter Enemy</th></tr></thead>
+          <tbody>
+            <tr><td>HP</td><td>3</td><td>3</td><td>3 (+10 shield)</td></tr>
+            <tr><td>Detection range</td><td>21 units</td><td>20 units</td><td>15 units (shoot)</td></tr>
+            <tr><td>Melee range</td><td>2 units</td><td>2 units</td><td>Close range</td></tr>
+            <tr><td>Melee damage</td><td>2</td><td>2</td><td>2</td></tr>
+            <tr><td>Ranged damage</td><td>1</td><td>1</td><td>1</td></tr>
+            <tr><td>Attack cooldown</td><td>2 s</td><td>2 s</td><td>2 s</td></tr>
+            <tr><td>Script</td><td><code>Enemy.cs</code></td><td><code>MovementEnemy.cs</code></td><td><code>ShooterEnemy.cs</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Enemy Drops &amp; Loot</div>
+      <ul class="doc-list">
+        <li>Enemy spawns a drop object at its death position</li>
+        <li>Player collects drop → score +1</li>
+        <li>After <strong>2 drops collected</strong> → Key spawns in the level</li>
+        <li>Weapon pickup prefabs can also drop for player to equip</li>
+      </ul>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Turret / Auto Weapon <span class="doc-badge">AutoWeapon.cs</span></div>
+      <p class="doc-p">A static autonomous defence structure that independently targets and fires at the player within range. Destroying it removes the threat entirely.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Property</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>HP</td><td>10</td></tr>
+            <tr><td>Detection / fire range</td><td>15 units</td></tr>
+            <tr><td>Fire rate</td><td>1 shot / second</td></tr>
+            <tr><td>Bullet speed</td><td>20 units/s</td></tr>
+            <tr><td>Bullet lifetime</td><td>3 seconds</td></tr>
+            <tr><td>On death</td><td>Destroys entire parent object</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Destructibles <span class="doc-badge">CubeExplosion.cs</span></div>
+      <ul class="doc-list">
+        <li>Triggered by any bullet collision</li>
+        <li>Spawns a debris/explosion visual</li>
+        <li>Debris auto-destroys after <strong>2 seconds</strong></li>
+        <li>Used for environmental destruction and visual feedback</li>
+      </ul>
+    </div>
+
+    <!-- ════ TAB: WEAPONS ════ -->
+    <div class="tab-pane" id="pane-weapon" role="tabpanel">
+      <h2 class="doc-h2">Weapon System</h2>
+
+      <div class="doc-h3">Default Weapon Stats <span class="doc-badge">Weapon.cs</span></div>
+      <div class="doc-grid2">
+        <div>
+          <div class="doc-code">maxAmmo      = 6
+fireCooldown = 0.2f    // seconds
+bulletSpeed  = 20f
+damage       = 2</div>
+        </div>
+        <div>
+          <ul class="doc-list">
+            <li>Ammo limited per magazine — reload required at 0</li>
+            <li>Fire rate enforced by per-shot cooldown timer</li>
+            <li>Raycasting from camera centre for pixel-perfect aim</li>
+            <li>Reload time: <strong>2 seconds</strong> (Right Click)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="doc-h3">Firing Sequence</div>
+
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div>
+          <div class="flow-title">Aim</div>
+          <div class="flow-desc">A raycast fires from the camera centre each frame. The hit point becomes the bullet's travel destination.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div>
+          <div class="flow-title">Fire (Left Click)</div>
+          <div class="flow-desc">If ammo &gt; 0 and cooldown elapsed — bullet instantiated at <code>firePoint</code>, directed toward raycast hit. Ammo decremented, cooldown reset, recoil applied to camera.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div>
+          <div class="flow-title">Empty magazine</div>
+          <div class="flow-desc">UI reload prompt appears. No further shots possible until reload completes.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div>
+          <div class="flow-title">Reload (Right Click)</div>
+          <div class="flow-desc">2-second delay coroutine. Ammo restored to <code>maxAmmo</code>. Reload sound plays.</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Weapon Stats Module <span class="doc-badge">WeaponStats.cs</span></div>
+      <p class="doc-p">A modular data component attached to weapon prefabs. When picked up, all stats are transferred to the active <code>Weapon</code> class in one call.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Field</th><th>Effect on equip</th></tr></thead>
+          <tbody>
+            <tr><td><code>weaponName</code></td><td>Updates HUD weapon label</td></tr>
+            <tr><td><code>fireRate</code></td><td>Recalculates <code>fireCooldown</code></td></tr>
+            <tr><td><code>damage</code></td><td>Writes to static <code>Weapon.damage</code> — affects all enemies</td></tr>
+            <tr><td><code>bulletSpeed</code></td><td>Updates projectile velocity</td></tr>
+            <tr><td><code>maxAmmo</code></td><td>Restores ammo to new maximum</td></tr>
+            <tr><td><code>bulletPrefab</code></td><td>Swaps projectile visual</td></tr>
+            <tr><td><code>recoilAmount</code></td><td>Updates camera recoil kick per shot</td></tr>
+            <tr><td><code>recoilSpeed / returnSpeed</code></td><td>Updates camera recoil animation speeds</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Projectile Tags</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Tag</th><th>Fired By</th><th>Hits</th></tr></thead>
+          <tbody>
+            <tr><td><code>Bullet</code></td><td>Player</td><td>Enemies, destructibles — 4 s lifetime</td></tr>
+            <tr><td><code>EnemyBullet</code></td><td>Enemies, turrets</td><td>Player — 2–3 s lifetime, applies knockback</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ TAB: WORLD & FLOW ════ -->
+    <div class="tab-pane" id="pane-world" role="tabpanel">
+      <h2 class="doc-h2">World &amp; Game Flow</h2>
+
+      <div class="doc-h3">Scene Layout</div>
+      <div class="scene-grid">
+        <div class="scene-card">
+          <div class="s-num">SampleScene</div>
+          <div class="s-name">Tutorial</div>
+          <div class="s-desc">274 KB — Introduction to all core mechanics. Minimal enemies, open layout, ideal for learning movement and combat.</div>
+        </div>
+        <div class="scene-card">
+          <div class="s-num">Scene_1</div>
+          <div class="s-name">Introductory Level</div>
+          <div class="s-desc">37 KB — First challenge area. Basic enemy encounters, straightforward path with a key gate at the end.</div>
+        </div>
+        <div class="scene-card">
+          <div class="s-num">Scene_2</div>
+          <div class="s-name">Compact Arena</div>
+          <div class="s-desc">18 KB — Tight space with more enemies. Tests close-quarters combat, dashing, and ammo management.</div>
+        </div>
+        <div class="scene-card">
+          <div class="s-num">Scene_3</div>
+          <div class="s-name">Main Complex</div>
+          <div class="s-desc">642 KB — Largest level. Mix of shooter enemies, turrets, auto-doors, destructibles, and environmental puzzles.</div>
+        </div>
+      </div>
+
+      <div class="doc-h3">Progression Loop</div>
+
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div>
+          <div class="flow-title">Spawn &amp; Explore</div>
+          <div class="flow-desc">Player and enemies spawn. Auto-doors open when player approaches within 5 units, close at 10 units — providing dynamic gating.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div>
+          <div class="flow-title">Combat</div>
+          <div class="flow-desc">Shoot enemies (raycasting), dodge their bullets, use dash to reposition. Pick up weapon drops for stat upgrades. Manage ammo — reload with Right Click.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div>
+          <div class="flow-title">Loot Collection</div>
+          <div class="flow-desc">Each enemy death spawns a drop. Collecting drops increases score (+1 each).</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div>
+          <div class="flow-title">Key Spawn</div>
+          <div class="flow-desc">After 2 drops are collected, a Key spawns in the level. Player must reach and collect it.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">05</div>
+        <div>
+          <div class="flow-title">Gate &amp; Advance</div>
+          <div class="flow-desc">With Key in inventory, player interacts with the exit gate to load the next scene. Repeat for all 4 scenes.</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Interactive Environment</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Element</th><th>Script</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td>Auto Door</td><td><code>AutoDoor.cs</code></td><td>Slides up 6 units on approach (&lt;5 u), closes when &gt;10 u — hysteresis prevents flickering</td></tr>
+            <tr><td>Turret</td><td><code>AutoWeapon.cs</code></td><td>Tracks &amp; shoots player within 15 u; 10 HP, destroys parent on death</td></tr>
+            <tr><td>Destructible</td><td><code>CubeExplosion.cs</code></td><td>Shatters on bullet hit, spawns debris (auto-destroyed in 2 s)</td></tr>
+            <tr><td>Key Gate</td><td><code>GameManager.cs</code></td><td>Requires Key tag in player inventory to activate scene transition</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">System Summary</div>
+      <div class="doc-grid2">
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Health Values</strong></p>
+          <ul class="doc-list">
+            <li>Player: <strong>10 HP</strong></li>
+            <li>Basic / Movement / Shooter enemy: <strong>3 HP</strong></li>
+            <li>Shooter shield: <strong>10 hits</strong></li>
+            <li>Turret: <strong>10 HP</strong></li>
+          </ul>
+        </div>
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Key Tags</strong></p>
+          <ul class="doc-list">
+            <li><code>Player</code> — enemy targeting</li>
+            <li><code>Bullet</code> — player projectile hits</li>
+            <li><code>EnemyBullet</code> — player damage</li>
+            <li><code>Drop</code> — collectible loot</li>
+            <li><code>Key</code> — gate progression item</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="doc-h3">Architecture Notes</div>
+      <ul class="doc-list">
+        <li><strong>CharacterController</strong> preferred over Rigidbody — smoother movement, predictable collision</li>
+        <li><strong>Static damage variable</strong> on <code>Weapon</code> class — weapon pickups globally update enemy threat scaling</li>
+        <li><strong>Component separation</strong> — movement, weapon, camera, and combat logic each in dedicated scripts</li>
+        <li><strong>Bullet lifetime</strong> (4 s player / 2–3 s enemy) — automatic memory cleanup without pooling</li>
+        <li><strong>Coroutines</strong> for dash duration, reload delay, and destruction timers</li>
+      </ul>
+    </div>
+
+  </div><!-- /.tab-section -->
+
+  <!-- GITHUB CTA -->
+  <div class="github-cta">
+    <div>
+      <div class="github-cta-label">Source Code</div>
+      <div class="github-cta-title">View full project on GitHub</div>
+    </div>
+    <a href="https://github.com/Alex-vincent04/DEMO_FPS_GAME" target="_blank" class="github-link">Open Repository →</a>
+  </div>
+
+  <footer>
+    <div class="footer-name">Alex Vincent</div>
+    <div class="footer-copy">Game Developer · © 2025</div>
+  </footer>
+
+</div>
+
+<script>
+  function switchTab(id) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    var btn  = document.getElementById('tbtn-' + id);
+    var pane = document.getElementById('pane-' + id);
+    if (btn)  { btn.classList.add('active');  btn.setAttribute('aria-selected','true'); }
+    if (pane) { pane.classList.add('active'); }
+  }
+</script>
+<script>
+  !function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'◐':'◑';}b.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);s();});s();}();
+</script>
+</body>
+</html>

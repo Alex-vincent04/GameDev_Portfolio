@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D Runner — Alex Vincent</title>
+<meta name="description" content="Detailed documentation for 2D Runner: mechanics, systems, architecture and game flow of an endless Unity runner game by Alex Vincent.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script>!function(){var t=localStorage.getItem('theme'),d=matchMedia('(prefers-color-scheme:dark)').matches;(t==='dark'||(t===null&&d))&&document.documentElement.setAttribute('data-theme','dark');}();</script>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --ink: #1a1814;
+    --mid: #8a8580;
+    --line: #dedad4;
+    --accent: #c84b2f;
+  }
+
+  [data-theme="dark"] {
+    --bg: #141312;
+    --ink: #eeebe6;
+    --mid: #6e6b66;
+    --line: #252220;
+    --accent: #d95f3f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141312;
+      --ink: #eeebe6;
+      --mid: #6e6b66;
+      --line: #252220;
+      --accent: #d95f3f;
+    }
+  }
+
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--mid);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--mid); }
+  .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── NAV ── */
+  nav {
+    padding: 2.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .back-link {
+    font-size: 0.72rem;
+    color: var(--mid);
+    text-decoration: none;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .project-hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--line);
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.1s forwards;
+  }
+  .project-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 1.5rem;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.8rem;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .project-summary {
+    max-width: 560px;
+    color: var(--mid);
+    font-size: 0.95rem;
+    line-height: 1.9;
+    margin-bottom: 2rem;
+  }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+  .tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mid);
+    border: 1px solid var(--line);
+    padding: 0.2rem 0.7rem;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+  .meta-item { }
+  .meta-label { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.2rem; }
+  .meta-value { font-size: 0.85rem; color: var(--ink); }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── TABS ── */
+  .tab-section {
+    padding: 4rem 0;
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.25s forwards;
+  }
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 3rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.4rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── DOC CONTENT ── */
+  .doc-h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    letter-spacing: -0.01em;
+    margin-bottom: 2rem;
+    line-height: 1.15;
+  }
+  .doc-h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+    margin: 2.5rem 0 0.8rem;
+  }
+  .doc-h3:first-child { margin-top: 0; }
+  .doc-p { font-size: 0.88rem; color: var(--mid); line-height: 1.9; margin-bottom: 1rem; }
+  .doc-list { list-style: none; margin-bottom: 1.4rem; }
+  .doc-list li {
+    font-size: 0.85rem;
+    color: var(--mid);
+    line-height: 2;
+    padding-left: 1.4rem;
+    position: relative;
+  }
+  .doc-list li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+
+  .doc-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 4rem; margin-bottom: 2rem; }
+
+  .doc-table-wrap { overflow-x: auto; margin-bottom: 1.8rem; }
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .doc-table th {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mid);
+    border-bottom: 1px solid var(--line);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .doc-table td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    line-height: 1.6;
+    vertical-align: top;
+  }
+  .doc-table tr:last-child td { border-bottom: none; }
+  .doc-table tr:hover td { background: rgba(200,75,47,0.03); }
+  code {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    background: rgba(0,0,0,0.05);
+    padding: 0.12rem 0.4rem;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  .doc-code {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    background: rgba(0,0,0,0.04);
+    border-left: 2px solid var(--accent);
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    line-height: 1.75;
+    color: var(--ink);
+    white-space: pre;
+  }
+
+  .doc-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(200,75,47,0.4);
+    color: var(--accent);
+    padding: 0.1rem 0.55rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  .flow-step {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 1rem;
+    align-items: start;
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-num {
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    padding-top: 0.15rem;
+  }
+  .flow-title { font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .flow-desc { font-size: 0.8rem; color: var(--mid); line-height: 1.7; }
+
+  /* ── GITHUB CTA ── */
+  .github-cta {
+    margin-top: 5rem;
+    padding: 2.5rem;
+    border: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+  }
+  .github-cta-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 0.4rem;
+  }
+  .github-cta-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+  .github-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--bg);
+    background: var(--ink);
+    padding: 0.8rem 1.8rem;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+  .github-link:hover { background: var(--accent); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 2.5rem 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5rem;
+  }
+  .footer-name { font-family: 'DM Serif Display', serif; font-size: 0.95rem; }
+  .footer-copy { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.08em; }
+
+  /* ── DIVIDER ── */
+  .doc-divider { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .doc-grid2 { grid-template-columns: 1fr; }
+    .github-cta { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="logo">Alex Vincent</a>
+    <div class="nav-right">
+      <a href="index.html" class="back-link">← Back to Portfolio</a>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">◑</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="project-hero">
+    <div class="project-label">002 · 2D Game · Unity 3D</div>
+    <h1>2D <em>Runner</em></h1>
+    <p class="project-summary">An endless 3D-perspective runner where the player dodges obstacles and collects coins on a looping road. Features a power-up system, double-jump mechanic, and fully modular C# architecture.</p>
+    <div class="hero-tags">
+      <span class="tag">Unity 3D</span>
+      <span class="tag">C#</span>
+      <span class="tag">Endless Runner</span>
+      <span class="tag">Physics</span>
+      <span class="tag">Procedural Spawning</span>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-label">Engine</div>
+        <div class="meta-value">Unity (C#)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Genre</div>
+        <div class="meta-value">Endless Runner</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Scripts</div>
+        <div class="meta-value">8 Modules</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Power-Ups</div>
+        <div class="meta-value">4 Types</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT WITH TABS -->
+  <div class="tab-section">
+
+    <!-- Tab Bar -->
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" aria-selected="true"  id="tbtn-mech" onclick="switchTab('mech')">Mechanics</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-sys"  onclick="switchTab('sys')">Systems</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-arch" onclick="switchTab('arch')">Architecture</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-flow" onclick="switchTab('flow')">Game Flow</button>
+    </div>
+
+    <!-- ════ TAB: MECHANICS ════ -->
+    <div class="tab-pane active" id="pane-mech" role="tabpanel">
+      <h2 class="doc-h2">Gameplay Mechanics</h2>
+
+      <div class="doc-grid2">
+        <div>
+          <div class="doc-h3">Player Movement</div>
+          <ul class="doc-list">
+            <li>Move left / right with <strong>A · ←</strong> and <strong>D · →</strong></li>
+            <li>X-axis clamped to <strong>±4.75</strong> units — keeps player on road</li>
+            <li>Movement speed configurable via <code>speed</code> parameter</li>
+            <li>2× speed available via Speed2x power-up</li>
+          </ul>
+
+          <div class="doc-h3">Double-Jump System</div>
+          <ul class="doc-list">
+            <li>Key: <strong>Space</strong></li>
+            <li>Up to <strong>2 consecutive jumps</strong> before landing</li>
+            <li>Jump force: <strong>5 units</strong> impulse (Rigidbody AddForce)</li>
+            <li>Max height cap at <strong>3f</strong> — prevents runaway ascent</li>
+            <li>Jump count resets on <code>planeCollision</code> tag contact</li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="doc-h3">Controls Reference</div>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead><tr><th>Action</th><th>Key(s)</th></tr></thead>
+              <tbody>
+                <tr><td>Move Left</td><td><code>A</code> / <code>←</code></td></tr>
+                <tr><td>Move Right</td><td><code>D</code> / <code>→</code></td></tr>
+                <tr><td>Jump (×2)</td><td><code>Space</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="doc-h3">Collision Types</div>
+          <ul class="doc-list">
+            <li><strong>OnCollisionEnter</strong> — obstacles, ground (hard physics)</li>
+            <li><strong>OnTriggerEnter</strong> — coins, power-ups (soft overlaps)</li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Power-Up System</div>
+      <p class="doc-p">All four power-ups share a single <strong>10-second countdown timer</strong>. Collecting a new power-up resets the timer. When it reaches zero every flag is cleared simultaneously.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Power-Up</th><th>Tag</th><th>Effect</th><th>Duration</th></tr></thead>
+          <tbody>
+            <tr><td>Shield</td><td><code>Powerup</code></td><td>Destroy obstacles on collision instead of dying</td><td>10 s</td></tr>
+            <tr><td>2× Points</td><td><code>Point2x</code></td><td>Each coin collected is worth +2 instead of +1</td><td>10 s</td></tr>
+            <tr><td>2× Coins</td><td><code>Coin2x</code></td><td>Spawner instantiates double the normal coin count</td><td>10 s</td></tr>
+            <tr><td>2× Speed</td><td><code>Speed2x</code></td><td>All moving objects (obstacles, coins, road) travel at 2× speed</td><td>10 s</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Scoring</div>
+      <ul class="doc-list">
+        <li>Base coin — <strong>+1 point</strong></li>
+        <li>Coin with Point2x active — <strong>+2 points</strong></li>
+        <li>Score is displayed in real-time on a UI Text element</li>
+        <li>Score persists until the game-over scene loads</li>
+      </ul>
+    </div>
+
+    <!-- ════ TAB: SYSTEMS ════ -->
+    <div class="tab-pane" id="pane-sys" role="tabpanel">
+      <h2 class="doc-h2">Core Systems</h2>
+
+      <div class="doc-h3">Spawn Schedule <span class="doc-badge">CreateCopy.cs</span></div>
+      <p class="doc-p">All items are spawned using Unity's <code>InvokeRepeating</code>. Delays and intervals are fixed — there is no difficulty ramping over time.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Item</th><th>Initial Delay</th><th>Repeat Every</th><th>Quantity</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Obstacles</td><td>2 s</td><td>3 s</td><td>1</td><td>5 variant prefabs, random X position</td></tr>
+            <tr><td>Coins (primary)</td><td>2 s</td><td>2 s</td><td>1 or 2</td><td>Doubled when Coin2x is active</td></tr>
+            <tr><td>Coins (secondary)</td><td>1 s</td><td>4 s</td><td>1</td><td>Staggered timing for lane variety</td></tr>
+            <tr><td>Shield</td><td>10 s</td><td>20 s</td><td>1</td><td>—</td></tr>
+            <tr><td>Point2x</td><td>5 s</td><td>20 s</td><td>1</td><td>—</td></tr>
+            <tr><td>Coin2x</td><td>5 s</td><td>20 s</td><td>1</td><td>—</td></tr>
+            <tr><td>Speed2x</td><td>10 s</td><td>20 s</td><td>1</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Spawn Positions</div>
+      <div class="doc-grid2">
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Obstacles</strong></p>
+          <ul class="doc-list">
+            <li>X: Random between <strong>−3.35</strong> and <strong>3.35</strong></li>
+            <li>Y: 0.5 (ground level)</li>
+            <li>Z: −5.209 f (just ahead of player)</li>
+          </ul>
+        </div>
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Coins &amp; Power-Ups</strong></p>
+          <ul class="doc-list">
+            <li>X: Random between <strong>−3.35</strong> and <strong>3.35</strong></li>
+            <li>Coins Y: 2.2 f (mid-air)</li>
+            <li>Power-Ups Y: 1.0 f</li>
+            <li>Z: Random −15 to 5 f</li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Road Recycling <span class="doc-badge">RoadMovement.cs</span></div>
+      <p class="doc-p">Road segments move backward continuously along <code>Vector3.back</code>. When a segment's Z position drops below <strong>−10 f</strong> it is teleported to <strong>Z: 24.1 f</strong>. This creates a seamless infinite-road illusion with zero additional instantiation cost.</p>
+
+      <div class="doc-h3">Object Cleanup <span class="doc-badge">Destroy.cs · CoinMovement.cs</span></div>
+      <p class="doc-p">Every spawned object checks its Z position each frame. Objects past <strong>Z &lt; −30 f</strong> are destroyed immediately, keeping the scene's active object count stable throughout a session.</p>
+
+      <div class="doc-h3">Speed2x Code Path</div>
+      <div class="doc-code">// Destroy.cs and ObstacleRotation.cs
+if (player.Speed2x)
+    transform.Translate(Vector3.back * Time.deltaTime * Speed * 2);
+else
+    transform.Translate(Vector3.back * Time.deltaTime * Speed);</div>
+
+      <div class="doc-h3">Power-Up Timer Logic</div>
+      <div class="doc-code">// Player.cs — Update()
+StartTimer -= Time.deltaTime;
+if (StartTimer &lt;= 0)
+{
+    Point2x = false;
+    PowerUp  = false;
+    Coin2x   = false;
+    Speed2x  = false;
+}</div>
+    </div>
+
+    <!-- ════ TAB: ARCHITECTURE ════ -->
+    <div class="tab-pane" id="pane-arch" role="tabpanel">
+      <h2 class="doc-h2">Script Architecture</h2>
+
+      <div class="doc-h3">Script Overview</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Script</th><th>Role</th><th>Key Dependencies</th></tr></thead>
+          <tbody>
+            <tr><td><code>Player.cs</code></td><td>Input · Physics · Score · Power-ups · Collision handling</td><td>— (central hub)</td></tr>
+            <tr><td><code>CreateCopy.cs</code></td><td>Procedural spawner for obstacles, coins, and power-ups</td><td>Player (Coin2x flag)</td></tr>
+            <tr><td><code>RoadMovement.cs</code></td><td>Infinite road recycling — moves &amp; resets road segments</td><td>—</td></tr>
+            <tr><td><code>Destroy.cs</code></td><td>Moves obstacles/power-ups, destroys when off-screen</td><td>Player (Speed2x flag)</td></tr>
+            <tr><td><code>CoinMovement.cs</code></td><td>Moves coins, destroys when off-screen</td><td>Player (Speed2x flag)</td></tr>
+            <tr><td><code>ObstacleRotation.cs</code></td><td>Adds rotation to obstacle movement</td><td>Player (Speed2x flag)</td></tr>
+            <tr><td><code>Animation.cs</code></td><td>Bridges Space key input to Animator.Jump parameter</td><td>Animator component</td></tr>
+            <tr><td><code>Button.cs</code></td><td>Scene navigation (Play / Game Over / Retry)</td><td>SceneManager</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Required Unity Tags</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Tag</th><th>Used By</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>Player</code></td><td>All movement scripts</td><td><code>FindGameObjectWithTag</code> — central reference</td></tr>
+            <tr><td><code>obstacle</code></td><td>Player.cs OnCollisionEnter</td><td>Triggers shield check or game over</td></tr>
+            <tr><td><code>coin</code></td><td>Player.cs OnTriggerEnter</td><td>Increments score (+1 or +2)</td></tr>
+            <tr><td><code>Powerup</code></td><td>Player.cs OnTriggerEnter</td><td>Activates shield flag</td></tr>
+            <tr><td><code>Point2x</code></td><td>Player.cs OnTriggerEnter</td><td>Activates double-points flag</td></tr>
+            <tr><td><code>Coin2x</code></td><td>Player.cs OnTriggerEnter</td><td>Activates double-coin-spawn flag</td></tr>
+            <tr><td><code>Speed2x</code></td><td>Player.cs OnTriggerEnter</td><td>Activates double-speed flag</td></tr>
+            <tr><td><code>planeCollision</code></td><td>Player.cs OnCollisionEnter</td><td>Resets JumpCount to 0 on landing</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Prefab Library</div>
+      <div class="doc-grid2">
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Obstacles — 5 variants</strong></p>
+          <ul class="doc-list">
+            <li>Obstacle_0, Obstacle_1, Obstacle_2 (generic)</li>
+            <li>Crate_01 (wooden crate)</li>
+            <li>Barrel_02 (metal barrel)</li>
+          </ul>
+
+          <p class="doc-p" style="margin-bottom:0.4rem; margin-top:1.4rem;"><strong>Collectibles</strong></p>
+          <ul class="doc-list">
+            <li>Coin Silver — base collectible</li>
+            <li>CoinParent — group container for coin rows</li>
+          </ul>
+        </div>
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Power-Up Prefabs</strong></p>
+          <ul class="doc-list">
+            <li>Lightning Blue (Shield)</li>
+            <li>Shield Metal (Shield visual)</li>
+            <li>Star Red (Point multiplier)</li>
+          </ul>
+
+          <p class="doc-p" style="margin-bottom:0.4rem; margin-top:1.4rem;"><strong>Environment Dressing</strong></p>
+          <ul class="doc-list">
+            <li>Prop_Barrier02 &amp; 03</li>
+            <li>Prop_Rock_Boulder_01</li>
+            <li>Spool02</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="doc-h3">Key Player.cs Variables</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Variable</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>speed</code></td><td>int</td><td>Horizontal movement speed</td></tr>
+            <tr><td><code>Score</code></td><td>float</td><td>Current accumulated score</td></tr>
+            <tr><td><code>rb</code></td><td>Rigidbody</td><td>Physics body reference</td></tr>
+            <tr><td><code>IsOnGround</code></td><td>bool</td><td>Ground-contact state</td></tr>
+            <tr><td><code>JumpCount</code></td><td>int</td><td>Jumps used (max 2)</td></tr>
+            <tr><td><code>PowerUp</code></td><td>bool</td><td>Shield active flag</td></tr>
+            <tr><td><code>Point2x</code></td><td>bool</td><td>Double-points active</td></tr>
+            <tr><td><code>Coin2x</code></td><td>bool</td><td>Double-coin-spawn active</td></tr>
+            <tr><td><code>Speed2x</code></td><td>bool</td><td>Double-speed active</td></tr>
+            <tr><td><code>StartTimer</code></td><td>float</td><td>Power-up countdown (10 s)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ TAB: GAME FLOW ════ -->
+    <div class="tab-pane" id="pane-flow" role="tabpanel">
+      <h2 class="doc-h2">Game Flow</h2>
+
+      <div class="doc-h3">Scene Layout</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Scene</th><th>Index</th><th>Purpose</th><th>Key Scripts</th></tr></thead>
+          <tbody>
+            <tr><td>UI Menu</td><td>0</td><td>Main menu — entry point</td><td>Button.cs (PlayBtn)</td></tr>
+            <tr><td>SampleScene</td><td>1</td><td>Core gameplay loop</td><td>Player.cs, CreateCopy.cs, RoadMovement.cs</td></tr>
+            <tr><td>GameOver</td><td>2</td><td>End screen with retry / menu options</td><td>Button.cs (PlayBtn_0)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Startup Sequence</div>
+      <div class="doc-code">1. Scene 1 (SampleScene) loads
+2. Player spawns at world origin
+3. CreateCopy.Start() registers all InvokeRepeating spawn timers
+4. RoadMovement begins translating road segments backward
+5. First obstacle appears after 2-second delay
+6. Score UI initialises at 0</div>
+
+      <div class="doc-h3">Per-Frame Loop</div>
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div>
+          <div class="flow-title">Input &amp; Movement</div>
+          <div class="flow-desc">Read A / D / Arrow keys → translate player horizontally. Clamp X to ±4.75. Read Space → jump if JumpCount &lt; 2.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div>
+          <div class="flow-title">World Update</div>
+          <div class="flow-desc">Road segments, obstacles, coins, and power-ups all translate Vector3.back each frame. Speed doubles if Speed2x is active.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div>
+          <div class="flow-title">Object Cleanup</div>
+          <div class="flow-desc">Each moving object checks its Z position. If Z &lt; −30 f → Destroy(gameObject).</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div>
+          <div class="flow-title">Power-Up Timer</div>
+          <div class="flow-desc">StartTimer decrements by Time.deltaTime. When ≤ 0 all power-up flags are set to false.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">05</div>
+        <div>
+          <div class="flow-title">Score Display</div>
+          <div class="flow-desc">UI Text is updated every frame with the current Score value.</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Collision Outcomes</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Event</th><th>Condition</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>OnCollisionEnter — obstacle</td><td>Shield (PowerUp) active</td><td>Obstacle prefab is destroyed; player survives</td></tr>
+            <tr><td>OnCollisionEnter — obstacle</td><td>No shield</td><td>Player destroyed → Scene 2 (GameOver) loads</td></tr>
+            <tr><td>OnCollisionEnter — ground</td><td>Always</td><td>JumpCount resets to 0</td></tr>
+            <tr><td>OnTriggerEnter — coin</td><td>Point2x off</td><td>Score += 1; coin destroyed</td></tr>
+            <tr><td>OnTriggerEnter — coin</td><td>Point2x on</td><td>Score += 2; coin destroyed</td></tr>
+            <tr><td>OnTriggerEnter — power-up</td><td>Any</td><td>Matching flag set to true; StartTimer = 10 s</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Game Over &amp; Retry</div>
+      <ul class="doc-list">
+        <li>Player collides with obstacle without shield → Game Over</li>
+        <li>Scene 2 loads — shows current score and retry / menu buttons</li>
+        <li><code>Button.PlayBtn()</code> → loads Scene 1 (restart)</li>
+        <li><code>Button.PlayBtn_0()</code> → loads Scene 0 (main menu)</li>
+      </ul>
+    </div>
+
+  </div><!-- /.tab-section -->
+
+  <!-- GITHUB CTA -->
+  <div class="github-cta">
+    <div>
+      <div class="github-cta-label">Source Code</div>
+      <div class="github-cta-title">View full project on GitHub</div>
+    </div>
+    <a href="https://github.com/Alex-vincent04/2D_RUNNER_GAME" target="_blank" class="github-link">Open Repository →</a>
+  </div>
+
+  <footer>
+    <div class="footer-name">Alex Vincent</div>
+    <div class="footer-copy">Game Developer · © 2025</div>
+  </footer>
+
+</div>
+
+<script>
+  function switchTab(id) {
+    /* deactivate all */
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.tab-pane').forEach(function(p) {
+      p.classList.remove('active');
+    });
+    /* activate selected */
+    var btn  = document.getElementById('tbtn-' + id);
+    var pane = document.getElementById('pane-' + id);
+    if (btn)  { btn.classList.add('active');  btn.setAttribute('aria-selected', 'true'); }
+    if (pane) { pane.classList.add('active'); }
+    /* scroll to top of tab content smoothly */
+    pane && pane.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+<script>
+  !function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'◐':'◑';}b.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);s();});s();}();
+</script>
+</body>
+</html>

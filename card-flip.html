@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Flip — Alex Vincent</title>
+<meta name="description" content="Detailed documentation for Card-Flip-Game: a Unity memory matching game with 4×4 grid, preview phase, countdown timer, coroutine flip animations, and Fisher-Yates shuffle by Alex Vincent.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script>!function(){var t=localStorage.getItem('theme'),d=matchMedia('(prefers-color-scheme:dark)').matches;(t==='dark'||(t===null&&d))&&document.documentElement.setAttribute('data-theme','dark');}();</script>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --ink: #1a1814;
+    --mid: #8a8580;
+    --line: #dedad4;
+    --accent: #c84b2f;
+  }
+
+  [data-theme="dark"] { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; } }
+  .theme-toggle { background: none; border: 1px solid var(--line); color: var(--mid); font-family: 'DM Mono', monospace; font-size: 0.9rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s, border-color 0.2s; flex-shrink: 0; padding: 0; }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--mid); }
+  .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── NAV ── */
+  nav {
+    padding: 2.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+  }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 1.1rem; text-decoration: none; color: var(--ink); }
+  .back-link { font-size: 0.72rem; color: var(--mid); text-decoration: none; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
+  .back-link:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .project-hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--line);
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.1s forwards;
+  }
+  .project-label { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); margin-bottom: 1.5rem; }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(3rem, 8vw, 5.5rem); line-height: 1.0; letter-spacing: -0.02em; margin-bottom: 1.8rem; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .project-summary { max-width: 560px; color: var(--mid); font-size: 0.95rem; line-height: 1.9; margin-bottom: 2rem; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+  .tag { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); border: 1px solid var(--line); padding: 0.2rem 0.7rem; }
+  .hero-meta { display: flex; gap: 3rem; flex-wrap: wrap; }
+  .meta-label { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.2rem; }
+  .meta-value { font-size: 0.85rem; color: var(--ink); }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── TABS ── */
+  .tab-section { padding: 4rem 0; opacity: 0; animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.25s forwards; }
+  .tab-bar { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 3rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--mid); background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.4rem; cursor: pointer; white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s; margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── DOC CONTENT ── */
+  .doc-h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.01em; margin-bottom: 2rem; line-height: 1.15; }
+  .doc-h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; letter-spacing: -0.01em; margin: 2.5rem 0 0.8rem; }
+  .doc-h3:first-child { margin-top: 0; }
+  .doc-p { font-size: 0.88rem; color: var(--mid); line-height: 1.9; margin-bottom: 1rem; }
+  .doc-list { list-style: none; margin-bottom: 1.4rem; }
+  .doc-list li { font-size: 0.85rem; color: var(--mid); line-height: 2; padding-left: 1.4rem; position: relative; }
+  .doc-list li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+  .doc-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 4rem; margin-bottom: 2rem; }
+  .doc-divider { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  .doc-table-wrap { overflow-x: auto; margin-bottom: 1.8rem; }
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .doc-table th { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); border-bottom: 1px solid var(--line); padding: 0.6rem 1rem; text-align: left; white-space: nowrap; }
+  .doc-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); color: var(--ink); line-height: 1.6; vertical-align: top; }
+  .doc-table tr:last-child td { border-bottom: none; }
+  .doc-table tr:hover td { background: rgba(200,75,47,0.03); }
+  code { font-family: 'DM Mono', monospace; font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 0.12rem 0.4rem; border-radius: 2px; color: var(--ink); }
+
+  .doc-code { font-family: 'DM Mono', monospace; font-size: 0.78rem; background: rgba(0,0,0,0.04); border-left: 2px solid var(--accent); padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; overflow-x: auto; line-height: 1.75; color: var(--ink); white-space: pre; }
+  .doc-badge { display: inline-block; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid rgba(200,75,47,0.4); color: var(--accent); padding: 0.1rem 0.55rem; margin-left: 0.5rem; vertical-align: middle; position: relative; top: -1px; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 2rem; }
+  .stat-card { border: 1px solid var(--line); padding: 1rem; }
+  .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--accent); line-height: 1; margin-bottom: 0.3rem; }
+  .stat-lbl { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); }
+
+  /* Card grid visual */
+  .card-grid-visual {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    max-width: 300px;
+    margin: 1.2rem 0 2rem;
+  }
+  .card-cell {
+    aspect-ratio: 1;
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1rem;
+    color: var(--mid);
+    transition: background 0.2s;
+  }
+  .card-cell.pair-a { border-color: var(--accent); color: var(--accent); }
+  .card-cell.pair-b { background: rgba(200,75,47,0.06); border-color: rgba(200,75,47,0.3); color: var(--accent); }
+
+  /* State pills */
+  .state-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .state-pill {
+    font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.3rem 0.9rem; border: 1px solid var(--line);
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .state-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mid); flex-shrink: 0; }
+  .state-pill.active .dot { background: var(--accent); }
+  .state-pill.active { border-color: rgba(200,75,47,0.4); color: var(--accent); }
+
+  /* Flow steps */
+  .flow-step { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; align-items: start; padding: 1.2rem 0; border-bottom: 1px solid var(--line); }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-num { font-size: 0.65rem; color: var(--accent); letter-spacing: 0.1em; padding-top: 0.15rem; }
+  .flow-title { font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .flow-desc { font-size: 0.8rem; color: var(--mid); line-height: 1.7; }
+
+  /* Animation diagram */
+  .anim-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 1.2rem 0 1.8rem;
+    overflow-x: auto;
+  }
+  .anim-frame {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 0 1rem;
+  }
+  .anim-box {
+    border: 1px solid var(--line);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--mid);
+  }
+  .anim-lbl { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); }
+  .anim-arrow { font-size: 0.9rem; color: var(--line); flex-shrink: 0; padding: 0 0.2rem; margin-bottom: 1.4rem; }
+
+  /* GitHub CTA */
+  .github-cta { margin-top: 5rem; padding: 2.5rem; border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+  .github-cta-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.4rem; }
+  .github-cta-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; line-height: 1.2; }
+  .github-link { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; color: var(--bg); background: var(--ink); padding: 0.8rem 1.8rem; white-space: nowrap; transition: background 0.2s; }
+  .github-link:hover { background: var(--accent); }
+
+  /* Footer */
+  footer { padding: 2.5rem 0; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; margin-top: 5rem; }
+  .footer-name { font-family: 'DM Serif Display', serif; font-size: 0.95rem; }
+  .footer-copy { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.08em; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .doc-grid2 { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .github-cta { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="logo">Alex Vincent</a>
+    <div class="nav-right">
+      <a href="index.html" class="back-link">← Back to Portfolio</a>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">◑</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="project-hero">
+    <div class="project-label">005 · Puzzle · Unity 3D</div>
+    <h1>Card <em>Flip</em></h1>
+    <p class="project-summary">A Unity memory-matching game where players flip cards to find 8 matching pairs within 60 seconds. Features a 3-second preview phase, coroutine-driven flip animations, Fisher-Yates shuffling, and modular scene management across main menu, gameplay, and result screens.</p>
+    <div class="hero-tags">
+      <span class="tag">Unity 3D</span>
+      <span class="tag">C#</span>
+      <span class="tag">Memory Game</span>
+      <span class="tag">Coroutines</span>
+      <span class="tag">Raycasting</span>
+      <span class="tag">TextMesh Pro</span>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-label">Grid</div>
+        <div class="meta-value">4 × 4 (16 cards)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Pairs</div>
+        <div class="meta-value">8</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Time Limit</div>
+        <div class="meta-value">60 seconds</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Preview</div>
+        <div class="meta-value">3 seconds</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Scenes</div>
+        <div class="meta-value">3</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-section">
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" aria-selected="true"  id="tbtn-mech"  onclick="switchTab('mech')">Mechanics</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-scripts" onclick="switchTab('scripts')">Scripts</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-anim"  onclick="switchTab('anim')">Animation &amp; Input</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-flow"  onclick="switchTab('flow')">Game Flow</button>
+    </div>
+
+    <!-- ════ TAB: MECHANICS ════ -->
+    <div class="tab-pane active" id="pane-mech" role="tabpanel">
+      <h2 class="doc-h2">Game Mechanics</h2>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">16</div><div class="stat-lbl">Total Cards</div></div>
+        <div class="stat-card"><div class="stat-val">8</div><div class="stat-lbl">Matching Pairs</div></div>
+        <div class="stat-card"><div class="stat-val">60 s</div><div class="stat-lbl">Time Limit</div></div>
+        <div class="stat-card"><div class="stat-val">3 s</div><div class="stat-lbl">Preview Phase</div></div>
+        <div class="stat-card"><div class="stat-val">0.7 s</div><div class="stat-lbl">Match Check Delay</div></div>
+        <div class="stat-card"><div class="stat-val">0.3 s</div><div class="stat-lbl">Flip Duration</div></div>
+      </div>
+
+      <div class="doc-h3">Board Layout</div>
+      <p class="doc-p">16 cards are arranged in a <strong>4×4 grid</strong>. Each card has a hidden ID (0–7); every ID appears exactly twice. The board is shuffled at game start using the Fisher-Yates algorithm — pairs shown below as matched examples.</p>
+
+      <div class="card-grid-visual">
+        <div class="card-cell pair-a">A</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell pair-b">A</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+        <div class="card-cell">?</div>
+      </div>
+
+      <div class="doc-h3">Card States</div>
+      <div class="state-row">
+        <div class="state-pill"><span class="dot"></span>Hidden (back facing)</div>
+        <div class="state-pill active"><span class="dot"></span>Flipped (front facing)</div>
+        <div class="state-pill active"><span class="dot"></span>Matched (dimmed, locked)</div>
+        <div class="state-pill"><span class="dot"></span>Animating (input blocked)</div>
+      </div>
+
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>State Flag</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>isFlipped</code></td><td>bool</td><td>Whether card currently shows its front face</td></tr>
+            <tr><td><code>isMatched</code></td><td>bool</td><td>Card is part of a found pair — cannot be re-flipped</td></tr>
+            <tr><td><code>animating</code></td><td>bool</td><td>Flip coroutine is running — input ignored</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Matching Rules</div>
+      <ul class="doc-list">
+        <li>Only <strong>2 cards</strong> may be face-up (unmatched) at any time</li>
+        <li>Input is <strong>locked</strong> while the match-check coroutine runs</li>
+        <li>IDs compared with simple integer equality — no string or name matching</li>
+        <li>Matched cards show a <strong>dimmed colour</strong> and become permanently unclickable</li>
+        <li>Unmatched pair both flip back after <strong>0.7 s</strong> delay</li>
+      </ul>
+
+      <div class="doc-h3">Win &amp; Loss Conditions</div>
+      <div class="doc-grid2">
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Win</strong></p>
+          <ul class="doc-list">
+            <li><code>matchedPairs</code> reaches <strong>8</strong></li>
+            <li>All 16 cards are face-up and dimmed</li>
+            <li>Scene 2 (Win screen) loads immediately</li>
+          </ul>
+        </div>
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Timeout</strong></p>
+          <ul class="doc-list">
+            <li>Timer reaches <strong>0</strong> before 8 pairs found</li>
+            <li>Scene 2 (Result screen) loads regardless</li>
+            <li>No score/penalty system — pure time challenge</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="doc-h3">Configurable Parameters</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Parameter</th><th>Script</th><th>Default</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>gameTime</code></td><td>GameManager</td><td>60 s</td><td>Total round duration</td></tr>
+            <tr><td><code>columns</code></td><td>Grid3D</td><td>4</td><td>Cards per row</td></tr>
+            <tr><td><code>spacingMultiplier</code></td><td>Grid3D</td><td>1.4</td><td>Gap between cards (× card width)</td></tr>
+            <tr><td><code>frontMaterials[]</code></td><td>GameManager</td><td>8 entries</td><td>One material per unique card face</td></tr>
+            <tr><td><code>backMaterial</code></td><td>GameManager</td><td>1 entry</td><td>Shared back-face material</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ TAB: SCRIPTS ════ -->
+    <div class="tab-pane" id="pane-scripts" role="tabpanel">
+      <h2 class="doc-h2">Script Reference</h2>
+
+      <div class="doc-h3">Card.cs — Individual Card Behaviour</div>
+      <p class="doc-p">Controls a single card's state machine, flip animation, and click validation. Every card is initialised once and communicates back to <code>GameManager</code> via reference.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Function</th><th>Called By</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>Init(id, gm, frontMat, backMat)</code></td><td>GameManager.CreateCards()</td><td>Sets cardID, manager reference, and assigns materials to renderers</td></tr>
+            <tr><td><code>OnClick()</code></td><td>CardInput (via raycast)</td><td>Validates state (not matched, not animating, not already flipped) then calls <code>SelectCard</code></td></tr>
+            <tr><td><code>FlipFront()</code></td><td>GameManager, PreviewRoutine</td><td>Starts the <code>Flip(true)</code> coroutine</td></tr>
+            <tr><td><code>FlipBack()</code></td><td>GameManager.CheckMatch()</td><td>Starts the <code>Flip(false)</code> coroutine</td></tr>
+            <tr><td><code>Flip(bool showFront)</code></td><td><em>coroutine</em></td><td>Animates X-scale 1→0.05→1 over 0.3 s; toggles front GameObject at midpoint</td></tr>
+            <tr><td><code>SetMatched()</code></td><td>GameManager.CheckMatch()</td><td>Sets <code>isMatched = true</code> and tints the card colour to indicate a found pair</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">GameManager.cs — Game Logic Hub</div>
+      <p class="doc-p">Owns all game state: card list, selection tracking, timer, and scene transitions. The central point all other scripts report to.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Function</th><th>Trigger</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>Start()</code></td><td>Scene load</td><td>Calls CreateCards() → Arrange() → StartCoroutine(PreviewRoutine())</td></tr>
+            <tr><td><code>Update()</code></td><td>Every frame</td><td>Decrements timer; calls LoadWinScene() on timeout</td></tr>
+            <tr><td><code>CreateCards()</code></td><td>Start()</td><td>Builds ID list [0..7, 0..7], shuffles, instantiates 16 card prefabs, calls Init on each</td></tr>
+            <tr><td><code>PreviewRoutine()</code></td><td>coroutine</td><td>Flips all cards front → waits 3 s → flips all back → enables timer</td></tr>
+            <tr><td><code>SelectCard(Card)</code></td><td>Card.OnClick()</td><td>Stores first/second card; starts CheckMatch() when second is selected</td></tr>
+            <tr><td><code>CheckMatch()</code></td><td>coroutine</td><td>Waits 0.7 s; compares IDs; calls SetMatched() or FlipBack(); checks win</td></tr>
+            <tr><td><code>LoadWinScene()</code></td><td>CheckMatch() / Update()</td><td>Loads Scene 2 (result/win screen)</td></tr>
+            <tr><td><code>Shuffle(List&lt;int&gt;)</code></td><td>CreateCards()</td><td>Fisher-Yates in-place shuffle for random card placement</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Grid3D.cs — 3D Layout Engine</div>
+      <p class="doc-p">Auto-positions all child card objects in a centred grid. Reads card dimensions from the first card's renderer so spacing adapts to any card size.</p>
+      <div class="doc-code">// Arrange() — simplified
+rows    = Ceil(cardCount / columns)
+xSpace  = cardWidth  × spacingMultiplier
+zSpace  = cardHeight × spacingMultiplier
+xOffset = (columns - 1) × xSpace / 2   // centres grid on X
+zOffset = (rows    - 1) × zSpace / 2   // centres grid on Z
+
+for each card i:
+    col = i % columns
+    row = i / columns
+    position.x =  col × xSpace - xOffset
+    position.z = -row × zSpace + zOffset</div>
+
+      <div class="doc-h3">CardInput.cs — Input Dispatcher</div>
+      <p class="doc-p">Runs a raycast every frame on mouse click. Keeps input logic entirely separate from card state logic.</p>
+      <div class="doc-code">// Update() — per frame
+if Input.GetMouseButtonDown(0):
+    ray = Camera.main.ScreenPointToRay(Input.mousePosition)
+    if Physics.Raycast(ray, out hit):
+        card = hit.collider.GetComponent&lt;Card&gt;()
+        if card != null:
+            card.OnClick()</div>
+
+      <div class="doc-h3">Scene Navigation Scripts</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Script</th><th>Function</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><code>MainMenu.cs</code></td><td><code>PlayGame()</code></td><td>SceneManager.LoadScene(1) — starts game</td></tr>
+            <tr><td><code>MainMenu.cs</code></td><td><code>QuitGame()</code></td><td>Application.Quit()</td></tr>
+            <tr><td><code>WinPage.cs</code></td><td><code>PlayAgain()</code></td><td>SceneManager.LoadScene(1) — restarts game</td></tr>
+            <tr><td><code>WinPage.cs</code></td><td><code>MainMenu()</code></td><td>SceneManager.LoadScene(0) — returns to menu</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ TAB: ANIMATION & INPUT ════ -->
+    <div class="tab-pane" id="pane-anim" role="tabpanel">
+      <h2 class="doc-h2">Animation &amp; Input</h2>
+
+      <div class="doc-h3">Flip Animation <span class="doc-badge">Card.cs · Flip()</span></div>
+      <p class="doc-p">The flip is a <strong>coroutine-based X-scale squeeze</strong>. There is no Animator component — the illusion is created purely through transform scaling, keeping it lightweight and frame-rate independent.</p>
+
+      <div class="anim-row">
+        <div class="anim-frame">
+          <div class="anim-box" style="width:52px;height:68px;">1, 1, 1</div>
+          <div class="anim-lbl">Start</div>
+        </div>
+        <div class="anim-arrow">→</div>
+        <div class="anim-frame">
+          <div class="anim-box" style="width:8px;height:68px;">·</div>
+          <div class="anim-lbl">Compress<br>150 ms</div>
+        </div>
+        <div class="anim-arrow">→</div>
+        <div class="anim-frame">
+          <div class="anim-box" style="width:8px;height:68px; border-color:var(--accent);">·</div>
+          <div class="anim-lbl" style="color:var(--accent);">Toggle<br>face</div>
+        </div>
+        <div class="anim-arrow">→</div>
+        <div class="anim-frame">
+          <div class="anim-box" style="width:52px;height:68px; border-color:var(--accent);">1, 1, 1</div>
+          <div class="anim-lbl">Expand<br>150 ms</div>
+        </div>
+        <div class="anim-arrow">→</div>
+        <div class="anim-frame">
+          <div class="anim-box" style="width:52px;height:68px;">Done</div>
+          <div class="anim-lbl">Complete<br>animating=false</div>
+        </div>
+      </div>
+
+      <div class="doc-code">IEnumerator Flip(bool showFront) {
+    animating = true;
+
+    // Phase 1: compress card (150 ms)
+    // Scale X: 1.0 → 0.05
+    float t = 0;
+    while (t &lt; 0.15f) {
+        transform.localScale = new Vector3(
+            Mathf.Lerp(1f, 0.05f, t / 0.15f), 1f, 1f);
+        t += Time.deltaTime;
+        yield return null;
+    }
+
+    // Midpoint: swap visible face
+    front.SetActive(showFront);
+    isFlipped = showFront;
+
+    // Phase 2: expand back (150 ms)
+    t = 0;
+    while (t &lt; 0.15f) {
+        transform.localScale = new Vector3(
+            Mathf.Lerp(0.05f, 1f, t / 0.15f), 1f, 1f);
+        t += Time.deltaTime;
+        yield return null;
+    }
+
+    transform.localScale = Vector3.one;
+    animating = false;
+}</div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Input Validation Chain</div>
+      <p class="doc-p">Multiple guards exist to prevent invalid flips. Each check is a separate responsibility — clean separation of concerns.</p>
+
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div>
+          <div class="flow-title">Mouse Click Detected</div>
+          <div class="flow-desc"><code>CardInput.Update()</code> fires a raycast every frame on left-click. If no card collider is hit, nothing happens.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div>
+          <div class="flow-title">Card.OnClick() Guards</div>
+          <div class="flow-desc">Returns early if: <code>isMatched</code> is true / <code>animating</code> is true / card is already flipped (same card clicked twice).</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div>
+          <div class="flow-title">GameManager.SelectCard() Guard</div>
+          <div class="flow-desc">Returns early if <code>inputLocked</code> is true (match-check coroutine is running) or <code>previewDone</code> is false (still in preview phase).</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div>
+          <div class="flow-title">Second Card Accepted</div>
+          <div class="flow-desc"><code>inputLocked</code> set to true. <code>CheckMatch()</code> coroutine launched. No further clicks accepted until coroutine completes.</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Timer System</div>
+      <ul class="doc-list">
+        <li>Timer hidden during the 3-second preview phase</li>
+        <li>Counts down every frame: <code>timer -= Time.deltaTime</code></li>
+        <li>Displayed as <code>TIME : XX</code> using <code>Mathf.CeilToInt()</code> — always rounds up</li>
+        <li>When timer ≤ 0 → <code>LoadWinScene()</code> called immediately regardless of match progress</li>
+      </ul>
+    </div>
+
+    <!-- ════ TAB: GAME FLOW ════ -->
+    <div class="tab-pane" id="pane-flow" role="tabpanel">
+      <h2 class="doc-h2">Game Flow</h2>
+
+      <div class="doc-h3">Scene Layout</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Scene Index</th><th>Name</th><th>Script(s)</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>Main Menu</td><td><code>MainMenu.cs</code></td><td>Play / Quit buttons</td></tr>
+            <tr><td>1</td><td>Game Scene</td><td><code>GameManager · Card · CardInput · Grid3D</code></td><td>Core gameplay — cards, timer, matching</td></tr>
+            <tr><td>2</td><td>Win / Result</td><td><code>WinPage.cs</code></td><td>Play Again / Main Menu buttons</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Full Round Lifecycle</div>
+
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div>
+          <div class="flow-title">Initialisation</div>
+          <div class="flow-desc"><code>GameManager.Start()</code> — builds ID list [0,0,1,1,…,7,7], Fisher-Yates shuffles it, instantiates 16 card prefabs at origin, calls <code>Grid3D.Arrange()</code> to position them, calls <code>Init()</code> on each card.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div>
+          <div class="flow-title">Preview Phase — 3 seconds</div>
+          <div class="flow-desc"><code>PreviewRoutine()</code> coroutine calls <code>FlipFront()</code> on every card. Timer hidden. After 3 seconds all cards call <code>FlipBack()</code>. Timer shown and begins countdown.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div>
+          <div class="flow-title">Player Selects First Card</div>
+          <div class="flow-desc">Click → raycast → <code>Card.OnClick()</code> passes guard checks → <code>GameManager.SelectCard()</code> stores card in <code>firstCard</code> and calls <code>FlipFront()</code>.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div>
+          <div class="flow-title">Player Selects Second Card</div>
+          <div class="flow-desc">Same input path. Stored in <code>secondCard</code>. <code>inputLocked = true</code>. <code>CheckMatch()</code> coroutine starts — no further input accepted.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">05</div>
+        <div>
+          <div class="flow-title">Match Check — 0.7 s delay</div>
+          <div class="flow-desc">Both cards visible. After 0.7 s: if <code>firstCard.cardID == secondCard.cardID</code> → <code>SetMatched()</code> on both, <code>matchedPairs++</code>. Otherwise → <code>FlipBack()</code> on both.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">06</div>
+        <div>
+          <div class="flow-title">Win Check</div>
+          <div class="flow-desc">If <code>matchedPairs == 8</code> → all pairs found → <code>LoadWinScene()</code>. Otherwise unlock input and return to step 03.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">07</div>
+        <div>
+          <div class="flow-title">Timeout</div>
+          <div class="flow-desc"><code>GameManager.Update()</code> detects timer ≤ 0 → <code>LoadWinScene()</code> regardless of match count. Scene 2 handles both win and timeout presentation.</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Data Flow Summary</div>
+      <div class="doc-code">CardInput.Update()
+    → Physics.Raycast
+    → Card.OnClick()          [guard: not matched, not animating, not flipped]
+    → GameManager.SelectCard() [guard: not inputLocked, previewDone]
+        → first card?  store firstCard, FlipFront(), return
+        → second card? store secondCard, FlipFront()
+                       inputLocked = true
+                       StartCoroutine(CheckMatch())
+                           yield 0.7 s
+                           compare IDs
+                           MATCH    → SetMatched() × 2 → matchedPairs++
+                                      matchedPairs==8? → LoadWinScene()
+                           NO MATCH → FlipBack() × 2
+                           inputLocked = false
+GameManager.Update()
+    → timer -= deltaTime
+    → timer ≤ 0 → LoadWinScene()</div>
+
+      <div class="doc-h3">Architecture Highlights</div>
+      <ul class="doc-list">
+        <li><strong>Separation of concerns</strong> — input (CardInput), state (Card), logic (GameManager), layout (Grid3D) each in their own class</li>
+        <li><strong>No Animator</strong> — flip achieved with a lightweight coroutine X-scale squeeze; zero overhead from animation state machines</li>
+        <li><strong>Integer ID matching</strong> — O(1) comparison, no string parsing or name-based matching</li>
+        <li><strong>Multiple input guards</strong> — layered validation prevents all edge cases (double-click, click-during-animation, click-during-check)</li>
+        <li><strong>Self-centering grid</strong> — Grid3D computes offsets from card dimensions; changing <code>columns</code> or prefab size automatically re-centres</li>
+        <li><strong>Dynamic difficulty</strong> — adjusting <code>gameTime</code> or <code>spacingMultiplier</code> in Inspector requires no code changes</li>
+      </ul>
+    </div>
+
+  </div><!-- /.tab-section -->
+
+  <!-- GITHUB CTA -->
+  <div class="github-cta">
+    <div>
+      <div class="github-cta-label">Source Code</div>
+      <div class="github-cta-title">View full project on GitHub</div>
+    </div>
+    <a href="https://github.com/Alex-vincent04/Card-Flip-Game" target="_blank" class="github-link">Open Repository →</a>
+  </div>
+
+  <footer>
+    <div class="footer-name">Alex Vincent</div>
+    <div class="footer-copy">Game Developer · © 2025</div>
+  </footer>
+
+</div>
+
+<script>
+  function switchTab(id) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    var btn  = document.getElementById('tbtn-' + id);
+    var pane = document.getElementById('pane-' + id);
+    if (btn)  { btn.classList.add('active');  btn.setAttribute('aria-selected','true'); }
+    if (pane) { pane.classList.add('active'); }
+  }
+</script>
+<script>
+  !function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'◐':'◑';}b.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);s();});s();}();
+</script>
+</body>
+</html>
