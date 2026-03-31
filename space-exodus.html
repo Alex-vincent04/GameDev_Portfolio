@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Exodus — Alex Vincent</title>
+<meta name="description" content="Detailed documentation for Space Exodus: a Unity 3D space combat and exploration game with 6-DOF flight, orbital mechanics, AI enemies, asteroid fields, and multi-planet progression by Alex Vincent.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script>!function(){var t=localStorage.getItem('theme'),d=matchMedia('(prefers-color-scheme:dark)').matches;(t==='dark'||(t===null&&d))&&document.documentElement.setAttribute('data-theme','dark');}();</script>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --ink: #1a1814;
+    --mid: #8a8580;
+    --line: #dedad4;
+    --accent: #c84b2f;
+  }
+
+  [data-theme="dark"] { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; } }
+  .theme-toggle { background: none; border: 1px solid var(--line); color: var(--mid); font-family: 'DM Mono', monospace; font-size: 0.9rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s, border-color 0.2s; flex-shrink: 0; padding: 0; }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--mid); }
+  .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── NAV ── */
+  nav { padding: 2.5rem 0; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 1.1rem; text-decoration: none; color: var(--ink); }
+  .back-link { font-size: 0.72rem; color: var(--mid); text-decoration: none; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
+  .back-link:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .project-hero { padding: 5rem 0 4rem; border-bottom: 1px solid var(--line); opacity: 0; animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.1s forwards; }
+  .project-label { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); margin-bottom: 1.5rem; }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(3rem, 8vw, 5.5rem); line-height: 1.0; letter-spacing: -0.02em; margin-bottom: 1.8rem; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .project-summary { max-width: 560px; color: var(--mid); font-size: 0.95rem; line-height: 1.9; margin-bottom: 2rem; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+  .tag { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); border: 1px solid var(--line); padding: 0.2rem 0.7rem; }
+  .hero-meta { display: flex; gap: 3rem; flex-wrap: wrap; }
+  .meta-label { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.2rem; }
+  .meta-value { font-size: 0.85rem; color: var(--ink); }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── TABS ── */
+  .tab-section { padding: 4rem 0; opacity: 0; animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.25s forwards; }
+  .tab-bar { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 3rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); background: none; border: none; border-bottom: 2px solid transparent; padding: 0.75rem 1.4rem; cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s; margin-bottom: -1px; }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── DOC CONTENT ── */
+  .doc-h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.01em; margin-bottom: 2rem; line-height: 1.15; }
+  .doc-h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; letter-spacing: -0.01em; margin: 2.5rem 0 0.8rem; }
+  .doc-h3:first-child { margin-top: 0; }
+  .doc-p { font-size: 0.88rem; color: var(--mid); line-height: 1.9; margin-bottom: 1rem; }
+  .doc-list { list-style: none; margin-bottom: 1.4rem; }
+  .doc-list li { font-size: 0.85rem; color: var(--mid); line-height: 2; padding-left: 1.4rem; position: relative; }
+  .doc-list li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+  .doc-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 4rem; margin-bottom: 2rem; }
+  .doc-divider { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  .doc-table-wrap { overflow-x: auto; margin-bottom: 1.8rem; }
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .doc-table th { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); border-bottom: 1px solid var(--line); padding: 0.6rem 1rem; text-align: left; white-space: nowrap; }
+  .doc-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); color: var(--ink); line-height: 1.6; vertical-align: top; }
+  .doc-table tr:last-child td { border-bottom: none; }
+  .doc-table tr:hover td { background: rgba(200,75,47,0.03); }
+  code { font-family: 'DM Mono', monospace; font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 0.12rem 0.4rem; border-radius: 2px; color: var(--ink); }
+
+  .doc-code { font-family: 'DM Mono', monospace; font-size: 0.78rem; background: rgba(0,0,0,0.04); border-left: 2px solid var(--accent); padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; overflow-x: auto; line-height: 1.75; color: var(--ink); white-space: pre; }
+  .doc-badge { display: inline-block; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid rgba(200,75,47,0.4); color: var(--accent); padding: 0.1rem 0.55rem; margin-left: 0.5rem; vertical-align: middle; position: relative; top: -1px; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 2rem; }
+  .stat-card { border: 1px solid var(--line); padding: 1rem; }
+  .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--accent); line-height: 1; margin-bottom: 0.3rem; }
+  .stat-lbl { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); }
+
+  /* Weapon cards */
+  .weapon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .weapon-card { border: 1px solid var(--line); padding: 1.2rem; }
+  .weapon-card .w-key { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--accent); margin-bottom: 0.3rem; }
+  .weapon-card .w-name { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.8rem; }
+  .weapon-card ul { list-style: none; }
+  .weapon-card ul li { font-size: 0.78rem; color: var(--mid); line-height: 1.9; padding-left: 1rem; position: relative; }
+  .weapon-card ul li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+
+  /* Enemy cards */
+  .enemy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+  .enemy-card { border: 1px solid var(--line); padding: 1.2rem; }
+  .enemy-card .e-tag { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(200,75,47,0.3); padding: 0.1rem 0.45rem; display: inline-block; margin-bottom: 0.6rem; }
+  .enemy-card .e-name { font-family: 'DM Serif Display', serif; font-size: 1rem; margin-bottom: 0.6rem; }
+  .enemy-card ul { list-style: none; }
+  .enemy-card ul li { font-size: 0.78rem; color: var(--mid); line-height: 1.9; padding-left: 1rem; position: relative; }
+  .enemy-card ul li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+
+  /* Scene cards */
+  .scene-row { border-bottom: 1px solid var(--line); padding: 1rem 0; display: grid; grid-template-columns: 4rem 1fr 1fr; gap: 1rem; align-items: baseline; }
+  .scene-row:first-child { border-top: 1px solid var(--line); }
+  .scene-id { font-size: 0.68rem; color: var(--accent); letter-spacing: 0.1em; }
+  .scene-name { font-size: 0.88rem; color: var(--ink); }
+  .scene-desc { font-size: 0.78rem; color: var(--mid); }
+
+  /* Flow steps */
+  .flow-step { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; align-items: start; padding: 1.2rem 0; border-bottom: 1px solid var(--line); }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-num { font-size: 0.65rem; color: var(--accent); letter-spacing: 0.1em; padding-top: 0.15rem; }
+  .flow-title { font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .flow-desc { font-size: 0.8rem; color: var(--mid); line-height: 1.7; }
+
+  /* Orbit diagram */
+  .orbit-visual { position: relative; width: 200px; height: 200px; margin: 1.5rem 0 2rem; flex-shrink: 0; }
+  .orbit-sun { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 28px; height: 28px; border-radius: 50%; background: var(--accent); opacity: 0.7; }
+  .orbit-ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1px dashed var(--line); transform: translate(-50%,-50%); }
+  .orbit-ring.r1 { width: 80px; height: 80px; }
+  .orbit-ring.r2 { width: 140px; height: 140px; }
+  .orbit-ring.r3 { width: 195px; height: 195px; }
+  .orbit-body { position: absolute; border-radius: 50%; background: var(--ink); opacity: 0.5; }
+  .orbit-body.p1 { width: 14px; height: 14px; top: calc(50% - 40px - 7px); left: calc(50% - 7px); }
+  .orbit-body.p2 { width: 18px; height: 18px; top: calc(50% - 7px); left: calc(50% + 70px - 9px); }
+  .orbit-body.p3 { width: 10px; height: 10px; top: calc(50% + 97px - 5px); left: calc(50% - 5px); }
+
+  /* GitHub CTA */
+  .github-cta { margin-top: 5rem; padding: 2.5rem; border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+  .github-cta-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.4rem; }
+  .github-cta-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; line-height: 1.2; }
+  .github-link { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; color: var(--bg); background: var(--ink); padding: 0.8rem 1.8rem; white-space: nowrap; transition: background 0.2s; }
+  .github-link:hover { background: var(--accent); }
+
+  /* Footer */
+  footer { padding: 2.5rem 0; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; margin-top: 5rem; }
+  .footer-name { font-family: 'DM Serif Display', serif; font-size: 0.95rem; }
+  .footer-copy { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.08em; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .doc-grid2 { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .weapon-grid { grid-template-columns: 1fr; }
+    .enemy-grid { grid-template-columns: 1fr; }
+    .scene-row { grid-template-columns: 3rem 1fr; }
+    .scene-desc { display: none; }
+    .github-cta { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="logo">Alex Vincent</a>
+    <div class="nav-right">
+      <a href="index.html" class="back-link">← Back to Portfolio</a>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">◑</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="project-hero">
+    <div class="project-label">001 · Featured · 3D Space Game</div>
+    <h1>Space <em>Exodus</em></h1>
+    <p class="project-summary">A 3D space combat and exploration game built in Unity. Players pilot a spaceship through asteroid fields, engage AI enemy ships and ground units with three distinct weapon systems, manage health and regeneration, and land on planets to explore new worlds — all tied together by N-body orbital mechanics and multi-scene progression.</p>
+    <div class="hero-tags">
+      <span class="tag">Unity 3D</span>
+      <span class="tag">C#</span>
+      <span class="tag">Blender</span>
+      <span class="tag">Space</span>
+      <span class="tag">AI</span>
+      <span class="tag">Physics</span>
+      <span class="tag">Input System</span>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-label">Engine</div>
+        <div class="meta-value">Unity (C#)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Player HP</div>
+        <div class="meta-value">30</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Weapons</div>
+        <div class="meta-value">3 types</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Enemy Types</div>
+        <div class="meta-value">2</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Asteroid Field</div>
+        <div class="meta-value">100 rocks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-section">
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" aria-selected="true"  id="tbtn-player"  onclick="switchTab('player')">Player</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-weapons" onclick="switchTab('weapons')">Weapons</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-world"   onclick="switchTab('world')">World</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-flow"    onclick="switchTab('flow')">Game Flow</button>
+    </div>
+
+    <!-- ════ TAB: PLAYER ════ -->
+    <div class="tab-pane active" id="pane-player" role="tabpanel">
+      <h2 class="doc-h2">Player Systems</h2>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">30</div><div class="stat-lbl">Max HP</div></div>
+        <div class="stat-card"><div class="stat-val">50</div><div class="stat-lbl">Base Speed</div></div>
+        <div class="stat-card"><div class="stat-val">2×</div><div class="stat-lbl">Boost Multiplier</div></div>
+        <div class="stat-card"><div class="stat-val">60°/s</div><div class="stat-lbl">Turn Speed</div></div>
+        <div class="stat-card"><div class="stat-val">1 HP</div><div class="stat-lbl">Regen Amount</div></div>
+        <div class="stat-card"><div class="stat-val">10 s</div><div class="stat-lbl">Regen Interval</div></div>
+      </div>
+
+      <div class="doc-h3">Spaceship Flight <span class="doc-badge">ShipMovement.cs</span></div>
+      <p class="doc-p">Full <strong>6-degrees-of-freedom</strong> flight using a Rigidbody. Keyboard controls strafe and thrust; mouse movement handles pitch and yaw for intuitive combat aiming.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Input</th><th>Action</th><th>Speed</th></tr></thead>
+          <tbody>
+            <tr><td><code>W</code></td><td>Forward thrust</td><td>50 units/s</td></tr>
+            <tr><td><code>A / D</code></td><td>Strafe left / right</td><td>50 units/s</td></tr>
+            <tr><td><code>S</code></td><td>Reverse thrust</td><td>50 units/s</td></tr>
+            <tr><td><code>Arrow Keys</code></td><td>Pitch / Yaw / Roll rotation</td><td>60°/s</td></tr>
+            <tr><td><code>Mouse</code></td><td>Camera-based rotation (sensitivity 2×)</td><td>—</td></tr>
+            <tr><td><code>Left Shift</code></td><td>Boost — doubles movement speed</td><td>100 units/s</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-grid2">
+        <div>
+          <p class="doc-p" style="margin-bottom:0.4rem;"><strong>Flight features</strong></p>
+          <ul class="doc-list">
+            <li>Smooth rotation via Quaternion interpolation</li>
+            <li>Separate keyboard and mouse input paths</li>
+            <li>Position persisted across scenes via <code>PlanetLoader.LastShipPosition</code></li>
+            <li>Asteroid collision instantly destroys the ship</li>
+          </ul>
+        </div>
+        <div>
+          <div class="doc-code" style="margin-bottom:0">// Boost activation
+if (Input.GetKeyDown(KeyCode.LeftShift))
+{
+    isBoosting = true;
+    currentSpeed = Speed * BoostMultiplier;
+    // 50 * 2 = 100 units/sec
+}</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Health &amp; Regeneration <span class="doc-badge">PlayerHealth.cs</span></div>
+      <p class="doc-p">Health is clamped between 0 and 30. Passive regeneration runs on a coroutine — no action required from the player. Death loads the Game Over scene immediately.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Damage Source</th><th>Damage</th><th>Extra Effect</th></tr></thead>
+          <tbody>
+            <tr><td>Enemy projectile (<code>Projectile.cs</code>)</td><td>1 HP</td><td>—</td></tr>
+            <tr><td>Enemy spaceship bullet</td><td>1 HP</td><td>—</td></tr>
+            <tr><td>Asteroid collision</td><td>Instant death</td><td>Ship destroyed</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="doc-code">public void TakeDamage(float damage)
+{
+    currentHealth -= damage;
+    currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+    if (currentHealth &lt;= 0)
+    {
+        Die();
+        SceneManager.LoadScene(9);  // GameOver scene
+    }
+}</div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Enemies — Overview</div>
+      <div class="enemy-grid">
+        <div class="enemy-card">
+          <div class="e-tag">Space AI</div>
+          <div class="e-name">Enemy Spaceship</div>
+          <ul>
+            <li>5 HP</li>
+            <li>Speed: 5 units/s</li>
+            <li>Detection: 20-unit raycast</li>
+            <li>Fire rate: 1 shot/second</li>
+            <li>Stops at 5 units from player</li>
+            <li>Always faces player (LookAt)</li>
+          </ul>
+        </div>
+        <div class="enemy-card">
+          <div class="e-tag">Ground AI</div>
+          <div class="e-name">FPS Enemy</div>
+          <ul>
+            <li>20 HP</li>
+            <li>Speed: 4 units/s, rot: 10°/s</li>
+            <li>Obstacle detection: 5 units (3 rays)</li>
+            <li>Avoidance: front → right → left</li>
+            <li>Ground-aligned via downward raycast</li>
+            <li>1 damage per bullet hit</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="doc-h3">Enemy Spaceship AI Logic <span class="doc-badge">EnemySpaceship.cs</span></div>
+      <div class="doc-code">// Detection & combat loop (simplified)
+if (Physics.Raycast(transform.position, directionToPlayer,
+                    out hit, raycastDistance /* 20 units */))
+{
+    // Pursuit — move toward player
+    transform.position += directionToPlayer * moveSpeed * Time.deltaTime;
+    transform.LookAt(player.transform);
+
+    // Combat — fire when close enough
+    if (distanceToPlayer &lt;= stoppingDistance /* 5 units */)
+    {
+        if (Time.time >= nextFireTime)
+        {
+            Shoot();
+            nextFireTime = Time.time + 1f / fireRate; // 1s cooldown
+        }
+    }
+}</div>
+
+      <div class="doc-h3">Ground Enemy Obstacle Avoidance <span class="doc-badge">FPS_Enemy.cs</span></div>
+      <div class="doc-code">// Three-ray avoidance (5-unit detection)
+if (!obstacleFront)      → Move forward toward player
+else if (!obstacleRight) → Strafe right
+else if (!obstacleLeft)  → Strafe left
+
+// Ground alignment — stays on terrain surface
+if (Physics.Raycast(rayOrigin, Vector3.down, out hit, 10f, groundLayer))
+    transform.position = new Vector3(x, hit.point.y + (height / 2), z);</div>
+    </div>
+
+    <!-- ════ TAB: WEAPONS ════ -->
+    <div class="tab-pane" id="pane-weapons" role="tabpanel">
+      <h2 class="doc-h2">Weapon Systems</h2>
+
+      <div class="weapon-grid">
+        <div class="weapon-card">
+          <div class="w-key">Space</div>
+          <div class="w-name">Bullet Type 1</div>
+          <ul>
+            <li>Cooldown: 0.2 s</li>
+            <li>Speed: 20 units/s</li>
+            <li>Lifetime: 2 seconds</li>
+            <li>Spawns at firePoint</li>
+          </ul>
+        </div>
+        <div class="weapon-card">
+          <div class="w-key">Z</div>
+          <div class="w-name">Bullet Type 2</div>
+          <ul>
+            <li>Cooldown: 0.2 s</li>
+            <li>Speed: 20 units/s</li>
+            <li>Lifetime: 2 seconds</li>
+            <li>Alternate projectile prefab</li>
+          </ul>
+        </div>
+        <div class="weapon-card">
+          <div class="w-key">X</div>
+          <div class="w-name">Bullet Type 3</div>
+          <ul>
+            <li>Cooldown: 0.2 s</li>
+            <li>Speed: 20 units/s</li>
+            <li>Lifetime: 2 seconds</li>
+            <li>Alternate projectile prefab</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="doc-h3">Bullet System <span class="doc-badge">ShipShooter.cs · Bullet3D.cs</span></div>
+      <ul class="doc-list">
+        <li>All three keys share the same 0.2-second fire cooldown</li>
+        <li>Bullets instantiate at the <code>firePoint</code> transform with forward velocity</li>
+        <li>Auto-destroyed after <strong>2 seconds</strong> via coroutine — no pooling required</li>
+        <li>Collision with asteroids destroys the bullet <em>and</em> the spaceship</li>
+        <li>Tag: <code>"Bullet"</code> — used by ground enemies for hit detection</li>
+      </ul>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Laser Weapon <span class="doc-badge">Laser.cs</span></div>
+      <p class="doc-p">An energy weapon that uses a <strong>raycast</strong> rather than a projectile — instant hit, no travel time. Visual feedback is provided by a <code>LineRenderer</code> and a dynamic <code>Light</code> component.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Property</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Max range</td><td>300 units</td></tr>
+            <tr><td>Visual duration</td><td>1 second on-screen</td></tr>
+            <tr><td>Visual components</td><td>LineRenderer + Light</td></tr>
+            <tr><td>Hit detection</td><td>Physics.Raycast — immediate</td></tr>
+            <tr><td>On impact</td><td>Calls <code>Explosion.OnImpact(hit.point)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="doc-code">// Laser raycast — instant hit
+if (Physics.Raycast(transform.position, fwd, out hit))
+{
+    Explosion temp = hit.transform.GetComponent&lt;Explosion&gt;();
+    if (temp != null)
+        temp.OnImpact(hit.point);  // Trigger explosion VFX
+}
+
+// Draw visual beam
+lineRenderer.SetPosition(0, firePoint.position);
+lineRenderer.SetPosition(1, hit.point);</div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Probe System <span class="doc-badge">ProbeShooter.cs</span></div>
+      <p class="doc-p">A specialised launcher for probe projectiles — used for planetary scanning or targeted special attacks. Configurable behaviour allows different probe payloads to be assigned in the Inspector.</p>
+
+      <div class="doc-h3">Enemy Projectile <span class="doc-badge">Projectile.cs</span></div>
+      <div class="doc-grid2">
+        <div>
+          <ul class="doc-list">
+            <li>Speed: <strong>10 units/s</strong></li>
+            <li>Lifetime: <strong>2 seconds</strong></li>
+            <li>Deals <strong>1 damage</strong> on player collision</li>
+            <li>Destroyed on impact</li>
+          </ul>
+        </div>
+        <div>
+          <div class="doc-code" style="margin-bottom:0">// Auto-target player
+void SetTarget(Transform player)
+{
+    targetDirection =
+      (player.position -
+       transform.position).normalized;
+    hasTarget = true;
+}
+// Fallback: FindGameObjectWithTag("Player")</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ TAB: WORLD ════ -->
+    <div class="tab-pane" id="pane-world" role="tabpanel">
+      <h2 class="doc-h2">World &amp; Environment</h2>
+
+      <div class="doc-h3">Orbital Mechanics <span class="doc-badge">CelestialRotation.cs · MoonOrbit.cs</span></div>
+      <p class="doc-p">All celestial bodies simulate <strong>N-body gravity</strong> using Newton's law of universal gravitation. Objects tagged <code>"Celestial"</code> with a <code>Rigidbody</code> are automatically included in the simulation.</p>
+
+      <div class="doc-grid2">
+        <div>
+          <div class="orbit-visual">
+            <div class="orbit-sun"></div>
+            <div class="orbit-ring r1"></div>
+            <div class="orbit-ring r2"></div>
+            <div class="orbit-ring r3"></div>
+            <div class="orbit-body p1"></div>
+            <div class="orbit-body p2"></div>
+            <div class="orbit-body p3"></div>
+          </div>
+        </div>
+        <div>
+          <ul class="doc-list">
+            <li><strong>G = 1000</strong> (customisable per scene)</li>
+            <li>Formula: F = G × (m₁ × m₂) / r²</li>
+            <li>Initial stable orbit: v = √(G × M / r)</li>
+            <li>Perpendicular velocity ensures circular paths</li>
+            <li>Full multi-body support — moons, planets, stars</li>
+          </ul>
+          <div class="doc-code" style="margin-bottom:0">// Circular orbit velocity
+float v = Mathf.Sqrt((G * centralMass) / r);
+// Applies perpendicular to direction from sun</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Asteroid Field <span class="doc-badge">AsteroidSpawner.cs · Asteroid.cs</span></div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Property</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Asteroids per field</td><td>100</td></tr>
+            <tr><td>Field radius</td><td>50 units</td></tr>
+            <tr><td>Individual scale range</td><td>0.5× – 2×</td></tr>
+            <tr><td>Individual rotation speed</td><td>20°/s (all axes)</td></tr>
+            <tr><td>Field rotation speed</td><td>10°/s (Y-axis)</td></tr>
+            <tr><td>Spawn distribution</td><td>Random on unit sphere × radius</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="doc-code">// Spawn loop — 100 asteroids distributed on sphere
+for (int i = 0; i &lt; numberOfAsteroids; i++)
+{
+    Vector3 pos = Random.onUnitSphere * radius + transform.position;
+    GameObject a = Instantiate(asteroidPrefab, pos, Random.rotation);
+    a.transform.SetParent(transform);       // child of spawner (inherits field rotation)
+    float s = Random.Range(minScale, maxScale);
+    a.transform.localScale = Vector3.one * s;
+}
+// Each asteroid: random X/Y/Z rotation speed
+// Field parent: rotates on Y at fieldRotationSpeed</div>
+
+      <p class="doc-p"><strong>Collision:</strong> Asteroid contact with the player ship triggers instant destruction. Additional scripts handle asteroid-to-asteroid collision events and ring formation.</p>
+
+      <div class="doc-h3">Visual Effects</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Script</th><th>Effect</th><th>Trigger</th></tr></thead>
+          <tbody>
+            <tr><td><code>Explosion.cs</code></td><td>Particle burst + audio at impact point</td><td>Laser hit / projectile collision via <code>OnImpact(Vector3)</code></td></tr>
+            <tr><td><code>Thruster.cs</code></td><td>Engine particle trail + trail renderer</td><td>Active while ship is moving</td></tr>
+            <tr><td><code>Laser.cs</code></td><td>LineRenderer beam + point light flash</td><td>Laser fire input</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ TAB: GAME FLOW ════ -->
+    <div class="tab-pane" id="pane-flow" role="tabpanel">
+      <h2 class="doc-h2">Game Flow</h2>
+
+      <div class="doc-h3">Scene Layout</div>
+      <div class="scene-row"><div class="scene-id">0</div><div class="scene-name">Home</div><div class="scene-desc">Main menu — play, options, quit</div></div>
+      <div class="scene-row"><div class="scene-id">1</div><div class="scene-name">CutScene-1</div><div class="scene-desc">Opening narrative cutscene</div></div>
+      <div class="scene-row"><div class="scene-id">2</div><div class="scene-name">Planet World 1</div><div class="scene-desc">First planet surface — ground enemies, FPS exploration</div></div>
+      <div class="scene-row"><div class="scene-id">3–4</div><div class="scene-name">Space / Transition</div><div class="scene-desc">Open space — asteroid fields, enemy ships, orbital bodies</div></div>
+      <div class="scene-row"><div class="scene-id">5</div><div class="scene-name">Planet World 2</div><div class="scene-desc">Second planet — new enemies, terrain, objectives</div></div>
+      <div class="scene-row"><div class="scene-id">9</div><div class="scene-name">Game Over</div><div class="scene-desc">Death screen — loads when player HP reaches 0</div></div>
+      <div class="scene-row"><div class="scene-id">End</div><div class="scene-name">End Credits</div><div class="scene-desc">Conclusion / credits scene</div></div>
+
+      <div class="doc-h3">Scene Transition System <span class="doc-badge">PlanetLoader.cs</span></div>
+      <p class="doc-p">When the ship enters a planet's collision zone, <code>PlanetLoader</code> saves the current position and triggers a scene load. The saved position allows the ship to spawn at the correct point when returning.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Collision Layer</th><th>Layer ID</th><th>Loads Scene</th></tr></thead>
+          <tbody>
+            <tr><td>planetLayer</td><td>9</td><td>Scene 2 — Planet World 1</td></tr>
+            <tr><td>planetLayer2</td><td>11</td><td>Scene 5 — Planet World 2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="doc-code">// Save position then load planet scene
+if (other.gameObject.layer == planetLayer)
+{
+    PlanetLoader.LastShipPosition = transform.position;
+    SceneManager.LoadScene(2);
+}</div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Complete Game Loop</div>
+
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div>
+          <div class="flow-title">Home → CutScene → Space</div>
+          <div class="flow-desc">Player launches from main menu, watches opening cutscene, then spawns in open space with active asteroid fields and orbiting celestial bodies.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div>
+          <div class="flow-title">Space Combat</div>
+          <div class="flow-desc">Enemy spaceships detect the player within 20 units and begin pursuit. Player engages with bullets (Space/Z/X) or the instant-hit laser. Enemy ships stop at 5 units and fire at 1 shot/second.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div>
+          <div class="flow-title">Asteroid Navigation</div>
+          <div class="flow-desc">100 asteroids fill the field, each rotating independently. Contact with any asteroid destroys the ship instantly. Boost (Shift) helps navigate tight passages.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div>
+          <div class="flow-title">Planet Landing</div>
+          <div class="flow-desc"><code>PlanetLoader</code> detects ship–planet collision. Ship position saved. Planet surface scene loads — gameplay switches to ground-based FPS-style combat.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">05</div>
+        <div>
+          <div class="flow-title">Surface Exploration</div>
+          <div class="flow-desc">FPS enemies patrol and avoid obstacles using three-ray detection. They take 1 damage per bullet, spawn explosion VFX on death at 0 HP. Player health regenerates 1 HP / 10 s passively.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">06</div>
+        <div>
+          <div class="flow-title">Death / Victory</div>
+          <div class="flow-desc">HP → 0 loads Scene 9 (Game Over) immediately. Completing planetary objectives progresses to Scene 5 then the End scene.</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">System Architecture</div>
+      <ul class="doc-list">
+        <li><strong>Rigidbody physics</strong> for ship, enemies, and celestial bodies — predictable and inspector-tweakable</li>
+        <li><strong>Raycast-based detection</strong> for enemy line-of-sight, obstacle avoidance, laser firing, and ground alignment</li>
+        <li><strong>Tag system:</strong> <code>"Player"</code> · <code>"Bullet"</code> · <code>"Asteroid"</code> · <code>"Celestial"</code> — decoupled hit detection</li>
+        <li><strong>Static position variable</strong> on <code>PlanetLoader</code> — lightweight cross-scene data without a persistent GameObject</li>
+        <li><strong>Coroutine regen</strong> — health recovery runs independently of Update, minimal overhead</li>
+        <li><strong>HDR post-processing</strong> profiles set the visual tone for space vs. planetary scenes</li>
+      </ul>
+    </div>
+
+  </div><!-- /.tab-section -->
+
+  <!-- GITHUB CTA -->
+  <div class="github-cta">
+    <div>
+      <div class="github-cta-label">Source Code</div>
+      <div class="github-cta-title">View full project on GitHub</div>
+    </div>
+    <a href="https://github.com/Alex-vincent04/SPACE_EXODUS" target="_blank" class="github-link">Open Repository →</a>
+  </div>
+
+  <footer>
+    <div class="footer-name">Alex Vincent</div>
+    <div class="footer-copy">Game Developer · © 2025</div>
+  </footer>
+
+</div>
+
+<script>
+  function switchTab(id) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    var btn  = document.getElementById('tbtn-' + id);
+    var pane = document.getElementById('pane-' + id);
+    if (btn)  { btn.classList.add('active');  btn.setAttribute('aria-selected','true'); }
+    if (pane) { pane.classList.add('active'); }
+  }
+</script>
+<script>
+  !function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'◐':'◑';}b.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);s();});s();}();
+</script>
+</body>
+</html>

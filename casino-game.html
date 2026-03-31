@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casino Game — Alex Vincent</title>
+<meta name="description" content="Detailed documentation for Casino Game: a Unity roulette simulator with betting mechanics, multipliers, quick-bet shortcuts, and win history by Alex Vincent.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script>!function(){var t=localStorage.getItem('theme'),d=matchMedia('(prefers-color-scheme:dark)').matches;(t==='dark'||(t===null&&d))&&document.documentElement.setAttribute('data-theme','dark');}();</script>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --ink: #1a1814;
+    --mid: #8a8580;
+    --line: #dedad4;
+    --accent: #c84b2f;
+  }
+
+  [data-theme="dark"] { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141312; --ink: #eeebe6; --mid: #6e6b66; --line: #252220; --accent: #d95f3f; } }
+  .theme-toggle { background: none; border: 1px solid var(--line); color: var(--mid); font-family: 'DM Mono', monospace; font-size: 0.9rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s, border-color 0.2s; flex-shrink: 0; padding: 0; }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--mid); }
+  .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── NAV ── */
+  nav {
+    padding: 2.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .back-link {
+    font-size: 0.72rem;
+    color: var(--mid);
+    text-decoration: none;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .project-hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--line);
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.1s forwards;
+  }
+  .project-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 1.5rem;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.8rem;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .project-summary {
+    max-width: 560px;
+    color: var(--mid);
+    font-size: 0.95rem;
+    line-height: 1.9;
+    margin-bottom: 2rem;
+  }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+  .tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mid);
+    border: 1px solid var(--line);
+    padding: 0.2rem 0.7rem;
+  }
+  .hero-meta { display: flex; gap: 3rem; flex-wrap: wrap; }
+  .meta-label { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.2rem; }
+  .meta-value { font-size: 0.85rem; color: var(--ink); }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── TABS ── */
+  .tab-section {
+    padding: 4rem 0;
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.25s forwards;
+  }
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 3rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.4rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── DOC CONTENT ── */
+  .doc-h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    letter-spacing: -0.01em;
+    margin-bottom: 2rem;
+    line-height: 1.15;
+  }
+  .doc-h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+    margin: 2.5rem 0 0.8rem;
+  }
+  .doc-h3:first-child { margin-top: 0; }
+  .doc-p { font-size: 0.88rem; color: var(--mid); line-height: 1.9; margin-bottom: 1rem; }
+  .doc-list { list-style: none; margin-bottom: 1.4rem; }
+  .doc-list li {
+    font-size: 0.85rem;
+    color: var(--mid);
+    line-height: 2;
+    padding-left: 1.4rem;
+    position: relative;
+  }
+  .doc-list li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+
+  .doc-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 4rem; margin-bottom: 2rem; }
+
+  .doc-table-wrap { overflow-x: auto; margin-bottom: 1.8rem; }
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .doc-table th {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mid);
+    border-bottom: 1px solid var(--line);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .doc-table td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    line-height: 1.6;
+    vertical-align: top;
+  }
+  .doc-table tr:last-child td { border-bottom: none; }
+  .doc-table tr:hover td { background: rgba(200,75,47,0.03); }
+  code {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    background: rgba(0,0,0,0.05);
+    padding: 0.12rem 0.4rem;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  .doc-code {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    background: rgba(0,0,0,0.04);
+    border-left: 2px solid var(--accent);
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    line-height: 1.75;
+    color: var(--ink);
+    white-space: pre;
+  }
+
+  .doc-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(200,75,47,0.4);
+    color: var(--accent);
+    padding: 0.1rem 0.55rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  .doc-divider { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  /* Wheel grid visual */
+  .wheel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    max-width: 320px;
+    margin: 1.2rem 0 1.8rem;
+  }
+  .wheel-slot {
+    border: 1px solid var(--line);
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .wheel-slot.red  { border-color: #c84b2f; color: #c84b2f; }
+  .wheel-slot.black { border-color: var(--ink); color: var(--ink); background: rgba(0,0,0,0.04); }
+  .slot-num { font-family: 'DM Serif Display', serif; font-size: 1rem; display: block; }
+  .slot-lbl { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); }
+
+  /* Flow steps */
+  .flow-step {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 1rem;
+    align-items: start;
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-num { font-size: 0.65rem; color: var(--accent); letter-spacing: 0.1em; padding-top: 0.15rem; }
+  .flow-title { font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .flow-desc { font-size: 0.8rem; color: var(--mid); line-height: 1.7; }
+
+  /* Multiplier grid */
+  .mult-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.4rem;
+    margin: 1rem 0 1.8rem;
+  }
+  .mult-cell {
+    border: 1px solid var(--line);
+    padding: 0.5rem 0.2rem;
+    text-align: center;
+    font-size: 0.72rem;
+  }
+  .mult-cell .mval { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--accent); display: block; }
+  .mult-cell .mlbl { font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); }
+
+  /* GitHub CTA */
+  .github-cta {
+    margin-top: 5rem;
+    padding: 2.5rem;
+    border: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+  }
+  .github-cta-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 0.4rem; }
+  .github-cta-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; line-height: 1.2; }
+  .github-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--bg);
+    background: var(--ink);
+    padding: 0.8rem 1.8rem;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+  .github-link:hover { background: var(--accent); }
+
+  /* Footer */
+  footer {
+    padding: 2.5rem 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5rem;
+  }
+  .footer-name { font-family: 'DM Serif Display', serif; font-size: 0.95rem; }
+  .footer-copy { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.08em; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .doc-grid2 { grid-template-columns: 1fr; }
+    .mult-grid { grid-template-columns: repeat(4, 1fr); }
+    .github-cta { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="logo">Alex Vincent</a>
+    <div class="nav-right">
+      <a href="index.html" class="back-link">← Back to Portfolio</a>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">◑</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="project-hero">
+    <div class="project-label">003 · Interactive · Unity 3D</div>
+    <h1>Casino <em>Game</em></h1>
+    <p class="project-summary">A Unity roulette simulator with a 12-slot wheel, 20-second betting rounds, random win multipliers from 1× to 11×, and a full suite of quick-bet shortcuts, bet-doubling, and win history tracking.</p>
+    <div class="hero-tags">
+      <span class="tag">Unity 3D</span>
+      <span class="tag">C#</span>
+      <span class="tag">Roulette</span>
+      <span class="tag">Coroutines</span>
+      <span class="tag">TextMesh Pro</span>
+      <span class="tag">Audio System</span>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-label">Engine</div>
+        <div class="meta-value">Unity (C#)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Wheel Slots</div>
+        <div class="meta-value">12</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Round Duration</div>
+        <div class="meta-value">20 seconds</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Max Multiplier</div>
+        <div class="meta-value">11×</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Starting Balance</div>
+        <div class="meta-value">10,000</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-section">
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" aria-selected="true"  id="tbtn-mech" onclick="switchTab('mech')">Mechanics</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-bet"  onclick="switchTab('bet')">Betting System</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-arch" onclick="switchTab('arch')">Architecture</button>
+      <button class="tab-btn"          role="tab" aria-selected="false" id="tbtn-flow" onclick="switchTab('flow')">Game Flow</button>
+    </div>
+
+    <!-- ════ TAB: MECHANICS ════ -->
+    <div class="tab-pane active" id="pane-mech" role="tabpanel">
+      <h2 class="doc-h2">Game Mechanics</h2>
+
+      <div class="doc-h3">The Roulette Wheel</div>
+      <p class="doc-p">The wheel is a <strong>12-slot roulette</strong> arranged in a logical 3×4 grid. Each slot belongs to a colour (Red/Black) and a parity (Odd/Even) group.</p>
+
+      <div class="wheel-grid">
+        <div class="wheel-slot red"><span class="slot-num">0</span><span class="slot-lbl">Red · Odd</span></div>
+        <div class="wheel-slot red"><span class="slot-num">1</span><span class="slot-lbl">Red · Even</span></div>
+        <div class="wheel-slot black"><span class="slot-num">2</span><span class="slot-lbl">Black · Odd</span></div>
+        <div class="wheel-slot black"><span class="slot-num">3</span><span class="slot-lbl">Black · Even</span></div>
+        <div class="wheel-slot red"><span class="slot-num">4</span><span class="slot-lbl">Red · Odd</span></div>
+        <div class="wheel-slot red"><span class="slot-num">5</span><span class="slot-lbl">Red · Even</span></div>
+        <div class="wheel-slot black"><span class="slot-num">6</span><span class="slot-lbl">Black · Odd</span></div>
+        <div class="wheel-slot black"><span class="slot-num">7</span><span class="slot-lbl">Black · Even</span></div>
+        <div class="wheel-slot red"><span class="slot-num">8</span><span class="slot-lbl">Red · Odd</span></div>
+        <div class="wheel-slot red"><span class="slot-num">9</span><span class="slot-lbl">Red · Even</span></div>
+        <div class="wheel-slot black"><span class="slot-num">10</span><span class="slot-lbl">Black · Odd</span></div>
+        <div class="wheel-slot black"><span class="slot-num">11</span><span class="slot-lbl">Black · Even</span></div>
+      </div>
+
+      <div class="doc-grid2">
+        <div>
+          <div class="doc-h3">Slot Groups</div>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead><tr><th>Group</th><th>Slots</th></tr></thead>
+              <tbody>
+                <tr><td>Red</td><td>0, 1, 4, 5, 8, 9</td></tr>
+                <tr><td>Black</td><td>2, 3, 6, 7, 10, 11</td></tr>
+                <tr><td>Odd</td><td>0, 2, 4, 6, 8, 10</td></tr>
+                <tr><td>Even</td><td>1, 3, 5, 7, 9, 11</td></tr>
+                <tr><td>Row 1</td><td>0, 1, 2, 3</td></tr>
+                <tr><td>Row 2</td><td>4, 5, 6, 7</td></tr>
+                <tr><td>Row 3</td><td>8, 9, 10, 11</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="doc-h3">Column Groups</div>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead><tr><th>Column</th><th>Slots</th></tr></thead>
+              <tbody>
+                <tr><td>Col 1</td><td>0, 4, 8</td></tr>
+                <tr><td>Col 2</td><td>1, 5, 9</td></tr>
+                <tr><td>Col 3</td><td>2, 6, 10</td></tr>
+                <tr><td>Col 4</td><td>3, 7, 11</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="doc-h3">Round Timing</div>
+          <ul class="doc-list">
+            <li><strong>0 – 10 s:</strong> Wheel spinning, no bets allowed</li>
+            <li><strong>At 10 s:</strong> "No more bets" — wheel animation starts</li>
+            <li><strong>10 – 20 s:</strong> Betting phase — bets accepted</li>
+            <li><strong>At 0 s:</strong> Winner determined, payouts applied</li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Win Multiplier System</div>
+      <p class="doc-p">When the player wins, a <strong>secondary random bonus</strong> (0–11) is drawn to determine the payout multiplier. Bonus index 11 wraps back to 1×.</p>
+
+      <div class="mult-grid">
+        <div class="mult-cell"><span class="mval">1×</span><span class="mlbl">Bonus 0</span></div>
+        <div class="mult-cell"><span class="mval">2×</span><span class="mlbl">Bonus 1</span></div>
+        <div class="mult-cell"><span class="mval">3×</span><span class="mlbl">Bonus 2</span></div>
+        <div class="mult-cell"><span class="mval">4×</span><span class="mlbl">Bonus 3</span></div>
+        <div class="mult-cell"><span class="mval">5×</span><span class="mlbl">Bonus 4</span></div>
+        <div class="mult-cell"><span class="mval">6×</span><span class="mlbl">Bonus 5</span></div>
+        <div class="mult-cell"><span class="mval">7×</span><span class="mlbl">Bonus 6</span></div>
+        <div class="mult-cell"><span class="mval">8×</span><span class="mlbl">Bonus 7</span></div>
+        <div class="mult-cell"><span class="mval">9×</span><span class="mlbl">Bonus 8</span></div>
+        <div class="mult-cell"><span class="mval">10×</span><span class="mlbl">Bonus 9</span></div>
+        <div class="mult-cell"><span class="mval">11×</span><span class="mlbl">Bonus 10</span></div>
+        <div class="mult-cell"><span class="mval">1×</span><span class="mlbl">Bonus 11</span></div>
+      </div>
+
+      <div class="doc-h3">Payout Formula</div>
+      <div class="doc-code">// Winner() — simplified
+winner  = Random.Range(0, 12);   // winning slot
+WinBonus = Random.Range(0, 12);  // bonus index
+
+if (slots[winner] > 0)           // player had a bet here
+{
+    multiplier = WinBonus + 1;   // 1x – 11x (index 11 wraps to 1x)
+    WinBet = slots[winner] * multiplier;
+    Balance += WinBet;
+}</div>
+
+      <p class="doc-p"><strong>Example:</strong> Bet of 500 on slot 7 wins with Bonus 4 → Multiplier 5× → Payout 2,500.</p>
+    </div>
+
+    <!-- ════ TAB: BETTING SYSTEM ════ -->
+    <div class="tab-pane" id="pane-bet" role="tabpanel">
+      <h2 class="doc-h2">Betting System</h2>
+
+      <div class="doc-h3">Core Bet Functions</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Function</th><th>Purpose</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>SelectChip(int value)</code></td><td>Choose chip denomination</td><td>Sets <code>chipSelected</code>, plays chip audio</td></tr>
+            <tr><td><code>PlaceBetOnSlot(int index)</code></td><td>Bet on a single slot</td><td>Deducts from balance, adds to <code>slots[index]</code></td></tr>
+            <tr><td><code>Clear()</code></td><td>Cancel all bets</td><td>Resets all slots to 0, refunds total bet</td></tr>
+            <tr><td><code>Bet()</code></td><td>Confirm and lock bets</td><td>Copies slots to <code>activeBetSlots</code>, clears UI text</td></tr>
+            <tr><td><code>Repeat()</code></td><td>Repeat last round's bets</td><td>Restores <code>lastBetSlots</code> if balance allows</td></tr>
+            <tr><td><code>Double()</code></td><td>Double all current bets</td><td>Multiplies every <code>slots[i]</code> by 2, deducts difference</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Quick-Bet Shortcuts</div>
+      <p class="doc-p">One-tap functions that spread <code>chipSelected</code> across an entire group instantly.</p>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Function</th><th>Slots Covered</th><th>Slots Count</th><th>Balance Deducted</th></tr></thead>
+          <tbody>
+            <tr><td><code>Row1()</code></td><td>0, 1, 2, 3</td><td>4</td><td>chipSelected × 4</td></tr>
+            <tr><td><code>Row2()</code></td><td>4, 5, 6, 7</td><td>4</td><td>chipSelected × 4</td></tr>
+            <tr><td><code>Row3()</code></td><td>8, 9, 10, 11</td><td>4</td><td>chipSelected × 4</td></tr>
+            <tr><td><code>Col1()</code></td><td>0, 4, 8</td><td>3</td><td>chipSelected × 3</td></tr>
+            <tr><td><code>Col2()</code></td><td>1, 5, 9</td><td>3</td><td>chipSelected × 3</td></tr>
+            <tr><td><code>Col3()</code></td><td>2, 6, 10</td><td>3</td><td>chipSelected × 3</td></tr>
+            <tr><td><code>Col4()</code></td><td>3, 7, 11</td><td>3</td><td>chipSelected × 3</td></tr>
+            <tr><td><code>Red()</code></td><td>0, 1, 4, 5, 8, 9</td><td>6</td><td>chipSelected × 6</td></tr>
+            <tr><td><code>Black()</code></td><td>2, 3, 6, 7, 10, 11</td><td>6</td><td>chipSelected × 6</td></tr>
+            <tr><td><code>Odd()</code></td><td>0, 2, 4, 6, 8, 10</td><td>6</td><td>chipSelected × 6</td></tr>
+            <tr><td><code>Even()</code></td><td>1, 3, 5, 7, 9, 11</td><td>6</td><td>chipSelected × 6</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Random Bet Generator</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Function</th><th>Random Slots</th><th>Balance Deducted</th></tr></thead>
+          <tbody>
+            <tr><td><code>RandomBet()</code></td><td>2 unique random slots</td><td>chipSelected × 2</td></tr>
+            <tr><td><code>RandomBet4()</code></td><td>4 random slots</td><td>chipSelected × 4</td></tr>
+            <tr><td><code>RandomBet8()</code></td><td>8 random slots</td><td>chipSelected × 8</td></tr>
+            <tr><td><code>RandomBet10()</code></td><td>10 random slots</td><td>chipSelected × 10</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Data Arrays</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Array</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>slots[12]</code></td><td>int[]</td><td>Live bets on each slot during betting phase</td></tr>
+            <tr><td><code>activeBetSlots[12]</code></td><td>int[]</td><td>Locked bets used during winner calculation</td></tr>
+            <tr><td><code>lastBetSlots[12]</code></td><td>int[]</td><td>Previous round's bets (enables Repeat feature)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Audio Feedback</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Audio Source</th><th>Triggered By</th></tr></thead>
+          <tbody>
+            <tr><td><code>ChipAudio</code></td><td>SelectChip()</td></tr>
+            <tr><td><code>PlaceBetAudio</code></td><td>PlaceBetOnSlot()</td></tr>
+            <tr><td><code>GeneralAudio</code></td><td>All quick-bet &amp; random-bet functions</td></tr>
+            <tr><td><code>ClearAudio</code></td><td>Clear()</td></tr>
+            <tr><td><code>DoubleAudio</code></td><td>Double()</td></tr>
+            <tr><td><code>NoMoreBets</code></td><td>Timer hits 10 s</td></tr>
+            <tr><td><code>SpinWheelAudio</code></td><td>Wheel() — spin start</td></tr>
+            <tr><td><code>WinAudio</code></td><td>Winner() — on win</td></tr>
+            <tr><td><code>UWonAudio</code></td><td>Winner() — win announcement</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ TAB: ARCHITECTURE ════ -->
+    <div class="tab-pane" id="pane-arch" role="tabpanel">
+      <h2 class="doc-h2">Script Architecture</h2>
+
+      <div class="doc-h3">Key Variables</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Variable</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>Balance</code></td><td>int</td><td>Player's current funds (starts at 10,000)</td></tr>
+            <tr><td><code>Timer</code></td><td>int</td><td>Round countdown — 20 → 0</td></tr>
+            <tr><td><code>TotalBet</code></td><td>int</td><td>Sum of all bets placed this round</td></tr>
+            <tr><td><code>chipSelected</code></td><td>int</td><td>Currently selected chip denomination</td></tr>
+            <tr><td><code>winner</code></td><td>int</td><td>Randomly selected winning slot (0–11)</td></tr>
+            <tr><td><code>WinBonus</code></td><td>int</td><td>Random bonus index (0–11) → multiplier 1×–11×</td></tr>
+            <tr><td><code>WinBet</code></td><td>int</td><td>Final payout amount for this round</td></tr>
+            <tr><td><code>buttonsEnabled</code></td><td>bool</td><td>Gate for all betting actions</td></tr>
+            <tr><td><code>IsSpinning</code></td><td>bool</td><td>Tracks whether wheel coroutines are running</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">Core Functions</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Function</th><th>Called From</th><th>Responsibility</th></tr></thead>
+          <tbody>
+            <tr><td><code>StartTimer()</code></td><td>Update() — every frame</td><td>Countdown; triggers Wheel() at 10 s, Winner() at 0 s</td></tr>
+            <tr><td><code>Wheel()</code></td><td>StartTimer() at T=10</td><td>Launches three spin coroutines simultaneously</td></tr>
+            <tr><td><code>SpinWheel1/2/3()</code></td><td>Wheel() via StartCoroutine</td><td>Cycles slot images every 0.1 s; settles on winner at T=0</td></tr>
+            <tr><td><code>Winner()</code></td><td>StartTimer() at T=0</td><td>RNG, payout calc, audio, win page, history update, reset</td></tr>
+            <tr><td><code>WinImage()</code></td><td>Winner()</td><td>Highlights winning slot and bonus in wheel UI</td></tr>
+            <tr><td><code>UpdateHistory()</code></td><td>Winner()</td><td>Shifts history panels and inserts new result</td></tr>
+            <tr><td><code>UpdateBalanceText()</code></td><td>Update()</td><td>Refreshes balance UI label every frame</td></tr>
+            <tr><td><code>UpdateTotalBetText()</code></td><td>Update()</td><td>Refreshes total-bet UI label every frame</td></tr>
+            <tr><td><code>UpdateWinText()</code></td><td>Winner()</td><td>Updates all win-amount displays in UI</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Spinning Wheel Coroutines</div>
+      <p class="doc-p">Three coroutines (<code>SpinWheel1</code>, <code>SpinWheel2</code>, <code>SpinWheel3</code>) run in parallel. Each cycles through slot images every 0.1 s while <code>Timer &gt; 0</code>, creating the illusion of spinning reels. Wheel 3 displays the bonus multiplier slot rather than the main winner.</p>
+      <div class="doc-code">// SpinWheel1 — simplified
+IEnumerator SpinWheel1() {
+    int i = 0;
+    while (Timer > 0) {
+        wheelImage1.sprite = slotSprites[i % 12];
+        i++;
+        yield return new WaitForSeconds(0.1f);
+    }
+    // Timer == 0 — settle on winner
+    wheelImage1.sprite = slotSprites[winner];
+}</div>
+
+      <div class="doc-h3">Technical Stack</div>
+      <ul class="doc-list">
+        <li><strong>Engine:</strong> Unity</li>
+        <li><strong>Language:</strong> C#</li>
+        <li><strong>UI:</strong> TextMesh Pro (TMP) for all text displays</li>
+        <li><strong>Input:</strong> Unity Input System with InputActions</li>
+        <li><strong>Async:</strong> Unity Coroutines for wheel animation and win-page timer</li>
+        <li><strong>Audio:</strong> Multiple Unity AudioSource components (9 distinct clips)</li>
+        <li><strong>RNG:</strong> <code>Random.Range()</code> for winner and bonus</li>
+      </ul>
+    </div>
+
+    <!-- ════ TAB: GAME FLOW ════ -->
+    <div class="tab-pane" id="pane-flow" role="tabpanel">
+      <h2 class="doc-h2">Game Flow</h2>
+
+      <div class="doc-h3">Round Lifecycle</div>
+
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div>
+          <div class="flow-title">Betting Phase — 20 → 10 seconds</div>
+          <div class="flow-desc">All bet buttons enabled. Player selects chip denomination then places bets on individual slots or uses quick-bet shortcuts (Row, Column, Red, Black, Odd, Even, Random). Balance is deducted immediately on each placement.</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div>
+          <div class="flow-title">No More Bets — At 10 seconds</div>
+          <div class="flow-desc">"No More Bets" audio plays. <code>buttonsEnabled</code> set to false. <code>Wheel()</code> called — launches three spinning coroutines. Bets are locked into <code>activeBetSlots</code>.</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div>
+          <div class="flow-title">Wheel Spinning — 10 → 0 seconds</div>
+          <div class="flow-desc">Three reel images cycle through all 12 slot sprites every 0.1 s, giving the visual effect of a spinning wheel. Spin audio plays continuously.</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div>
+          <div class="flow-title">Winner Determination — At 0 seconds</div>
+          <div class="flow-desc"><code>Winner()</code> fires: draws a random <code>winner</code> (0–11) and a random <code>WinBonus</code> (0–11). Wheels settle on the winning images. Payout is calculated and added to Balance if player had a bet on the winner.</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">05</div>
+        <div>
+          <div class="flow-title">Result — 5 second display</div>
+          <div class="flow-desc">If player won: Win page shown, win audio &amp; announcement audio play, winnings displayed. If lost: Loss result shown silently. History bar updates with new winning slot.</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">06</div>
+        <div>
+          <div class="flow-title">Reset</div>
+          <div class="flow-desc">All slot arrays cleared. <code>TotalBet</code> reset to 0. <code>buttonsEnabled</code> restored. <code>Timer</code> reset to 20. Round begins again from step 01.</div>
+        </div>
+      </div>
+
+      <hr class="doc-divider">
+
+      <div class="doc-h3">Collision &amp; State Outcomes</div>
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Scenario</th><th>Condition</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Winner drawn</td><td>Player has bet on winning slot</td><td>WinBet = slots[winner] × multiplier; Balance += WinBet; Win page shown</td></tr>
+            <tr><td>Winner drawn</td><td>No bet on winning slot</td><td>WinBet = 0; no win page</td></tr>
+            <tr><td>PlaceBet attempt</td><td><code>buttonsEnabled</code> is false</td><td>Bet rejected silently</td></tr>
+            <tr><td>Double attempt</td><td>Balance &lt; TotalBet</td><td>Double rejected (insufficient funds)</td></tr>
+            <tr><td>Repeat attempt</td><td>Balance &lt; sum of lastBetSlots</td><td>Repeat rejected (insufficient funds)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-h3">History System</div>
+      <p class="doc-p">After every round, <code>UpdateHistory()</code> shifts all history slot images one position and inserts the new winning slot image at position 0. This maintains a visible log of the last 12 rounds' results on-screen, giving players pattern-spotting context.</p>
+
+      <div class="doc-h3">UI Elements</div>
+      <ul class="doc-list">
+        <li><strong>Timer Display</strong> — MM:SS countdown</li>
+        <li><strong>Balance Display</strong> — live player funds</li>
+        <li><strong>Total Bet Display</strong> — aggregated wager this round</li>
+        <li><strong>Slot Bet Labels</strong> — per-slot chip amount (12 labels)</li>
+        <li><strong>Win Amount Display</strong> — payout after round</li>
+        <li><strong>History Row</strong> — last 12 winning slots as images</li>
+        <li><strong>Win Page</strong> — full-screen result overlay shown for 5 s</li>
+        <li><strong>Wheel Reels</strong> — 3 animated reel images (Wheel 3 shows bonus multiplier)</li>
+      </ul>
+    </div>
+
+  </div><!-- /.tab-section -->
+
+  <!-- GITHUB CTA -->
+  <div class="github-cta">
+    <div>
+      <div class="github-cta-label">Source Code</div>
+      <div class="github-cta-title">View full project on GitHub</div>
+    </div>
+    <a href="https://github.com/Alex-vincent04/Casino_Game" target="_blank" class="github-link">Open Repository →</a>
+  </div>
+
+  <footer>
+    <div class="footer-name">Alex Vincent</div>
+    <div class="footer-copy">Game Developer · © 2025</div>
+  </footer>
+
+</div>
+
+<script>
+  function switchTab(id) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.tab-pane').forEach(function(p) {
+      p.classList.remove('active');
+    });
+    var btn  = document.getElementById('tbtn-' + id);
+    var pane = document.getElementById('pane-' + id);
+    if (btn)  { btn.classList.add('active');  btn.setAttribute('aria-selected', 'true'); }
+    if (pane) { pane.classList.add('active'); }
+  }
+</script>
+<script>
+  !function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'◐':'◑';}b.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);s();});s();}();
+</script>
+</body>
+</html>

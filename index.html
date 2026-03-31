@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alex Vincent</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script>!function(){var t=localStorage.getItem('theme'),d=matchMedia('(prefers-color-scheme:dark)').matches;(t==='dark'||(t===null&&d))&&document.documentElement.setAttribute('data-theme','dark');}();</script>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --ink: #1a1814;
+    --mid: #8a8580;
+    --line: #dedad4;
+    --accent: #c84b2f;
+  }
+
+  [data-theme="dark"] {
+    --bg: #141312;
+    --ink: #eeebe6;
+    --mid: #6e6b66;
+    --line: #252220;
+    --accent: #d95f3f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141312;
+      --ink: #eeebe6;
+      --mid: #6e6b66;
+      --line: #252220;
+      --accent: #d95f3f;
+    }
+  }
+
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--mid);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--mid); }
+  .nav-right { display: flex; align-items: center; gap: 2rem; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 2rem; }
+
+  /* NAV */
+  nav {
+    padding: 2.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+  }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.72rem;
+    color: var(--mid);
+    text-decoration: none;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+
+  /* HERO */
+  #hero { padding: 7rem 0 6rem; border-bottom: 1px solid var(--line); }
+  .hero-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 2rem;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3.5rem, 9vw, 6.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.1s forwards;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-body {
+    max-width: 480px;
+    color: var(--mid);
+    font-size: 0.95rem;
+    line-height: 1.9;
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.25s forwards;
+  }
+  .hero-cta {
+    margin-top: 3rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    opacity: 0;
+    animation: rise 0.8s cubic-bezier(.16,1,.3,1) 0.4s forwards;
+  }
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--bg);
+    background: var(--ink);
+    padding: 0.8rem 1.8rem;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: var(--accent); }
+  .btn-ghost { background: transparent; color: var(--mid); padding: 0; }
+  .btn-ghost:hover { color: var(--ink); background: transparent; }
+  .btn-ghost::after { content: ' →'; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTIONS */
+  section { padding: 5rem 0; border-bottom: 1px solid var(--line); }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3.5rem;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  .section-num { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* SKILLS */
+  .skills-grid { display: grid; grid-template-columns: 1fr 1fr; }
+  .skill-row {
+    padding: 1.6rem 0;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  .skill-row:nth-child(odd) { padding-right: 3rem; border-right: 1px solid var(--line); }
+  .skill-row:nth-child(even) { padding-left: 3rem; }
+  .skill-row:nth-last-child(-n+2) { border-bottom: none; }
+  .skill-cat { font-size: 0.7rem; color: var(--mid); letter-spacing: 0.1em; text-transform: uppercase; padding-top: 0.1rem; }
+  .skill-vals { font-size: 0.9rem; color: var(--ink); }
+
+  /* PROJECTS */
+  .project {
+    padding: 2.8rem 0;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    align-items: start;
+    transition: opacity 0.2s;
+  }
+  .project:last-child { border-bottom: none; }
+  .project:hover { opacity: 0.8; }
+  .project-num { font-size: 0.65rem; color: var(--mid); letter-spacing: 0.1em; margin-bottom: 1rem; }
+  .project-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.6rem;
+    line-height: 1.2;
+  }
+  .project-desc { color: var(--mid); font-size: 0.88rem; line-height: 1.8; margin-bottom: 1.2rem; }
+  .project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mid);
+    border: 1px solid var(--line);
+    padding: 0.2rem 0.7rem;
+  }
+  .project-meta { text-align: right; }
+  .project-type { font-size: 0.68rem; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .project-features { list-style: none; font-size: 0.82rem; color: var(--mid); line-height: 2.1; }
+  .project-features li::before { content: '— '; }
+  .btn-details {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 1.2rem;
+    transition: letter-spacing 0.2s;
+  }
+  .btn-details:hover { letter-spacing: 0.2em; }
+
+  /* EDUCATION */
+  .edu-row {
+    padding: 1.8rem 0;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 2rem;
+    align-items: baseline;
+  }
+  .edu-row:last-child { border-bottom: none; }
+  .edu-year { font-size: 0.72rem; color: var(--mid); letter-spacing: 0.08em; }
+  .edu-name { font-family: 'DM Serif Display', serif; font-size: 1.05rem; line-height: 1.3; margin-bottom: 0.2rem; }
+  .edu-sub { font-size: 0.82rem; color: var(--mid); }
+
+  /* CERTS */
+  .certs { margin-top: 4rem; }
+  .certs-head { font-size: 0.7rem; color: var(--mid); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .cert-row {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .cert-row:last-child { border-bottom: none; }
+  .cert-name { font-size: 0.9rem; }
+  .cert-issuer { font-size: 0.72rem; color: var(--mid); letter-spacing: 0.06em; white-space: nowrap; }
+
+  /* ACHIEVEMENT */
+  .achievement {
+    margin-top: 3rem;
+    padding: 1.8rem 2rem;
+    border-left: 2px solid var(--accent);
+    background: rgba(200,75,47,0.04);
+  }
+  .achievement-text { font-family: 'DM Serif Display', serif; font-size: 1.05rem; margin-bottom: 0.3rem; }
+  .achievement-sub { font-size: 0.78rem; color: var(--mid); }
+
+  /* CONTACT */
+  #contact { border-bottom: none; }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+  .contact-intro {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .contact-links { list-style: none; }
+  .contact-links li { border-bottom: 1px solid var(--line); }
+  .contact-links li:first-child { border-top: 1px solid var(--line); }
+  .contact-links a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.1rem 0;
+    font-size: 0.82rem;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .contact-links a:hover { color: var(--accent); }
+  .contact-links a span { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* FOOTER */
+  footer {
+    padding: 2.5rem 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-name { font-family: 'DM Serif Display', serif; font-size: 0.95rem; }
+  .footer-copy { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.08em; }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    h1 { font-size: 3rem; }
+    .skills-grid { grid-template-columns: 1fr; }
+    .skill-row:nth-child(odd) { padding-right: 0; border-right: none; }
+    .skill-row:nth-child(even) { padding-left: 0; }
+    .skill-row:nth-last-child(-n+2) { border-bottom: 1px solid var(--line); }
+    .skill-row:last-child { border-bottom: none; }
+    .project { grid-template-columns: 1fr; gap: 1.5rem; }
+    .project-meta { text-align: left; }
+    .edu-row { grid-template-columns: 90px 1fr; gap: 1rem; }
+    .contact-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <div class="logo">Alex Vincent</div>
+    <ul class="nav-links">
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#education">Education</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">◑</button>
+  </nav>
+
+  <section id="hero">
+    <div class="hero-label">Game Developer · Unity Specialist · Kerala, India</div>
+    <h1>Alex<br><em>Vincent</em></h1>
+    <p class="hero-body">Unity developer with hands-on experience designing real-time interactive applications. Strong foundation in gameplay mechanics, performance optimisation, and modular C# scripting.</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn">View work</a>
+      <a href="#contact" class="btn btn-ghost">Get in touch</a>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="section-head">
+      <h2>Skills</h2>
+      <span class="section-num">01</span>
+    </div>
+    <div class="skills-grid">
+      <div class="skill-row">
+        <span class="skill-cat">Game Engines</span>
+        <span class="skill-vals">Unity</span>
+      </div>
+      <div class="skill-row">
+        <span class="skill-cat">Programming</span>
+        <span class="skill-vals">C# · C · Python · JavaScript</span>
+      </div>
+      <div class="skill-row">
+        <span class="skill-cat">Web</span>
+        <span class="skill-vals">HTML · CSS · JavaScript</span>
+      </div>
+      <div class="skill-row">
+        <span class="skill-cat">Design &amp; Tools</span>
+        <span class="skill-vals">Blender · Figma · Git</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="section-head">
+      <h2>Projects</h2>
+      <span class="section-num">02</span>
+    </div>
+
+    <div class="project">
+      <div>
+        <div class="project-num">001 · Featured</div>
+        <div class="project-title">Space Exodus</div>
+        <p class="project-desc">A 3D space combat and exploration game featuring 6-DOF spaceship flight, three weapon systems, N-body orbital mechanics, asteroid fields, AI enemy ships and ground units, multi-planet scene transitions, and a health regen survival system.</p>
+        <div class="project-tags">
+          <span class="tag">Unity 3D</span>
+          <span class="tag">C#</span>
+          <span class="tag">Blender</span>
+          <span class="tag">Space</span>
+          <span class="tag">AI</span>
+        </div>
+        <a href="space-exodus.html" class="btn-details">View Details →</a>
+      </div>
+      <div class="project-meta">
+        <div class="project-type">3D Game</div>
+        <ul class="project-features">
+          <li>6-DOF spaceship flight</li>
+          <li>3 weapon systems</li>
+          <li>Orbital mechanics</li>
+          <li>Multi-scene worlds</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="project">
+      <div>
+        <div class="project-num">002</div>
+        <div class="project-title">2D Runner</div>
+        <p class="project-desc">An endless 3D-perspective runner where the player dodges obstacles and collects coins on a looping road. Features a power-up system, double-jump mechanic, and fully modular C# architecture.</p>
+        <div class="project-tags">
+          <span class="tag">Unity 3D</span>
+          <span class="tag">C#</span>
+          <span class="tag">Endless Runner</span>
+        </div>
+        <a href="2d-runner.html" class="btn-details">View Details →</a>
+      </div>
+      <div class="project-meta">
+        <div class="project-type">2D Game</div>
+        <ul class="project-features">
+          <li>Double-jump system</li>
+          <li>4 power-up types</li>
+          <li>Procedural spawning</li>
+          <li>Modular scripts</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="project">
+      <div>
+        <div class="project-num">003</div>
+        <div class="project-title">Casino Game</div>
+        <p class="project-desc">A Unity roulette simulator with a 12-slot wheel, 20-second betting rounds, random win multipliers up to 11×, and a full suite of quick-bet and history-tracking features.</p>
+        <div class="project-tags">
+          <span class="tag">Unity 3D</span>
+          <span class="tag">C#</span>
+          <span class="tag">Roulette</span>
+        </div>
+        <a href="casino-game.html" class="btn-details">View Details →</a>
+      </div>
+      <div class="project-meta">
+        <div class="project-type">Interactive</div>
+        <ul class="project-features">
+          <li>12-slot roulette wheel</li>
+          <li>1× – 11× multipliers</li>
+          <li>Quick-bet shortcuts</li>
+          <li>Win history tracking</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="project">
+      <div>
+        <div class="project-num">004</div>
+        <div class="project-title">FPS Demo</div>
+        <p class="project-desc">A Unity first-person shooter demo with sprint, dash, and jump movement, raycasting weapon mechanics, multiple enemy AI types (melee, ranged, tank with shield), and key-gated multi-scene progression.</p>
+        <div class="project-tags">
+          <span class="tag">Unity 3D</span>
+          <span class="tag">C#</span>
+          <span class="tag">FPS</span>
+          <span class="tag">AI</span>
+        </div>
+        <a href="fps-game.html" class="btn-details">View Details →</a>
+      </div>
+      <div class="project-meta">
+        <div class="project-type">3D Game</div>
+        <ul class="project-features">
+          <li>3 enemy AI types</li>
+          <li>Dash &amp; sprint system</li>
+          <li>Weapon pickup &amp; swap</li>
+          <li>4-scene progression</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="project">
+      <div>
+        <div class="project-num">005</div>
+        <div class="project-title">Card Flip</div>
+        <p class="project-desc">A Unity memory-matching game with a 4×4 card grid, 3-second preview phase, 60-second countdown, coroutine-driven flip animations, and modular scene management across menu, game, and result screens.</p>
+        <div class="project-tags">
+          <span class="tag">Unity 3D</span>
+          <span class="tag">C#</span>
+          <span class="tag">Memory Game</span>
+        </div>
+        <a href="card-flip.html" class="btn-details">View Details →</a>
+      </div>
+      <div class="project-meta">
+        <div class="project-type">Puzzle</div>
+        <ul class="project-features">
+          <li>16-card 4×4 grid</li>
+          <li>Preview & countdown</li>
+          <li>Flip animations</li>
+          <li>Fisher-Yates shuffle</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="education">
+    <div class="section-head">
+      <h2>Education</h2>
+      <span class="section-num">03</span>
+    </div>
+
+    <div class="edu-row">
+      <div class="edu-year">2022 – 2026</div>
+      <div>
+        <div class="edu-name">B.Tech · Computer Science &amp; Design</div>
+        <div class="edu-sub">Viswajyothi College of Engineering &amp; Technology, Vazhakulam</div>
+      </div>
+    </div>
+    <div class="edu-row">
+      <div class="edu-year">2021 – 2022</div>
+      <div>
+        <div class="edu-name">Higher Secondary</div>
+        <div class="edu-sub">ST. Agustines HSS, Kalloorkkad</div>
+      </div>
+    </div>
+    <div class="edu-row">
+      <div class="edu-year">2019 – 2020</div>
+      <div>
+        <div class="edu-name">AISSE</div>
+        <div class="edu-sub">Nirmala Public School, Muvattupuzha</div>
+      </div>
+    </div>
+
+    <div class="certs">
+      <div class="certs-head">Certifications</div>
+      <div class="cert-row">
+        <span class="cert-name">Game Development</span>
+        <span class="cert-issuer">Emergio Games · 2025</span>
+      </div>
+      <div class="cert-row">
+        <span class="cert-name">Web Development</span>
+        <span class="cert-issuer">Corizo Edutech · 2025</span>
+      </div>
+      <div class="cert-row">
+        <span class="cert-name">Software Conceptual Design</span>
+        <span class="cert-issuer">NPTEL · 2024</span>
+      </div>
+    </div>
+
+    <div class="achievement">
+      <div class="achievement-text">Secured Second Rank</div>
+      <div class="achievement-sub">Software Conceptual Design · NPTEL Certification Course</div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="section-head">
+      <h2>Contact</h2>
+      <span class="section-num">04</span>
+    </div>
+    <div class="contact-grid">
+      <p class="contact-intro">Open to game development roles, freelance projects, and creative collaborations.</p>
+      <ul class="contact-links">
+        <li><a href="mailto:alexvincent580@gmail.com">alexvincent580@gmail.com <span>Email</span></a></li>
+        <li><a href="tel:+917736984513">+91 77369 84513 <span>Phone</span></a></li>
+        <li><a href="https://linkedin.com/in/alex-vincent-59b7a0266" target="_blank">linkedin.com/in/alex-vincent <span>LinkedIn</span></a></li>
+        <li><a href="https://github.com/Alex-vincent04" target="_blank">github.com/Alex-vincent04 <span>GitHub</span></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-name">Alex Vincent</div>
+    <div class="footer-copy">Game Developer · © 2025</div>
+  </footer>
+
+</div>
+<script>
+  !function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'◐':'◑';}b.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);s();});s();}();
+</script>
+</body>
+</html>
