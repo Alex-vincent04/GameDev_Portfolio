@@ -158,12 +158,23 @@
     .enemy-grid { grid-template-columns: 1fr; }
     .scene-row { grid-template-columns: 3rem 1fr; }
     .scene-desc { display: none; }
-    .github-cta { flex-direction: column; align-items: flex-start; }
     footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+  /* ── SCROLL PROGRESS ── */
+  #scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: var(--accent);
+    z-index: 10000;
+    transition: width 0.1s ease-out;
   }
 </style>
 </head>
 <body>
+<div id="scroll-progress"></div>
 <div class="wrap">
 
   <!-- NAV -->
@@ -658,6 +669,14 @@ if (other.gameObject.layer == planetLayer)
 </script>
 <script>
   !function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'◐':'◑';}b.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);s();});s();}();
+</script>
+<script>
+  window.addEventListener('scroll', function() {
+    var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+    var height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    var scrolled = (winScroll / height) * 100;
+    document.getElementById("scroll-progress").style.width = scrolled + "%";
+  });
 </script>
 </body>
 </html>
