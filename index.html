@@ -572,12 +572,23 @@
       }
 
       .project {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .project > div:first-child {
+        display: contents;
       }
 
       .project-meta {
         text-align: left;
+        order: 1;
+        margin-top: 1.5rem;
+      }
+
+      .btn-details {
+        order: 2;
+        margin-top: 1.5rem;
       }
 
       .edu-row {
